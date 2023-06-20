@@ -1,0 +1,77 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap");
+
+.clock-container {
+	font-family: "Roboto", sans-serif;
+	font-feature-settings: "zero";
+}
+
+.time-display {
+	margin-top: -2em;
+	display: flex;
+	font-size: 4em;
+	justify-content: center;
+	align-items: center;
+	color: rgb(176, 190, 197);
+}
+
+.date-display {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	font-size: 1.3em;
+	margin-top: -3em;
+	color: rgb(93, 119, 133);
+}
+
+.timezone-container {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	gap: 20px;
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+.timezone-pair {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	background-color: rgb(38, 50, 56); /* Deep Blue-Gray */
+	border-radius: 10%;
+	border: 2px solid rgb(55, 71, 79); /* Slightly lighter Blue-Gray for border */
+	width: 100px;
+	margin-bottom: 10px;
+	color: rgb(176, 190, 197); /* Light Gray for text */
+}
+
+.timezone-name {
+	font-weight: bold;
+	color: ;
+}
+
+.timezone-time {
+	color: whitesmoke;
+	font-size: 0.8em;
+}
+.addButtonClass, .deleteButtonClass {
+	width: 2em;
+	height: 2em;
+	background-color: #2d2d2d;
+	color: #ffffff;
+	border: 1px solid rgb(49, 0, 49);
+	border-radius: 4px;
+	cursor: pointer;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.addButtonClass:hover, .deleteButtonClass:hover {
+	background-color: rgb(94, 0, 94);
+}
+
+.twoButtonsClass {
+    display: flex;
+    justify-content: flex-end;
+    gap: 2px;
+}
