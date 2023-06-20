@@ -27,9 +27,10 @@
 	display: flex;
 	flex-direction: row;
 	justify-content: center;
-	gap: 20px;
+	gap: 10px;
 	margin-left: 10px;
 	margin-right: 10px;
+	margin-top: -2em;
 }
 
 .timezone-pair {
@@ -39,7 +40,7 @@
 	background-color: rgb(38, 50, 56); /* Deep Blue-Gray */
 	border-radius: 5%;
 	border: 2px solid rgb(55, 71, 79); /* Slightly lighter Blue-Gray for border */
-	width: 100px;
+	width: 80px;
 	margin-bottom: 10px;
 	color: rgb(176, 190, 197); /* Light Gray for text */
 }
@@ -47,11 +48,12 @@
 .timezone-name {
 	font-weight: bold;
 	color: rgb(176, 190, 197);
+	font-size: 0.8em;
 }
 
 .timezone-time {
 	color: whitesmoke;
-	font-size: 0.8em;
+	font-size: 0.7em;
 }
 
 .addButtonClass, .deleteButtonClass {
