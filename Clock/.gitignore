@@ -1,0 +1,29 @@
+# Dependency directories
+node_modules/
+
+# TypeScript compiled directory
+dist/
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.log
+
+# IDE - VSCode
+.vscode
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+
+# TypeScript cache
+*.tsbuildinfo
