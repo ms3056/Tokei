@@ -1,0 +1,11 @@
+{
+	"id": "clock-for-obsidian",
+	"name": "Clock for Obsidian",
+	"version": "1.3.6",
+	"minAppVersion": "0.16.3",
+	"description": "A simple clock plugin for Obsidian",
+	"author": "HiroMike",
+	"authorUrl": "none",
+	"isDesktopOnly": false,
+	"donation": "none"
+  }
