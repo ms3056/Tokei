@@ -429,6 +429,9 @@ class ClockSettingTab extends PluginSettingTab {
 						}),
 						fragment.createEl("br"),
 						fragment.createEl("br"),
+						"Click ENTER after each name or offset entry.",
+						fragment.createEl("br"),
+						fragment.createEl("br"),
 						"Names and Offset pairs are not validated."
 					);
 				})
