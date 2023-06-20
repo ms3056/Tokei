@@ -11,12 +11,8 @@
     {
       "name": "Detroit",
       "offset": "-4"
-    },
-    {
-      "name": "Pune",
-      "offset": "+5.5"
     }
   ],
-  "timezoneFormat": "HH:mm - EEEEE",
+  "timezoneFormat": "HH:mm - EEE",
   "use24HourFormat": false
 }

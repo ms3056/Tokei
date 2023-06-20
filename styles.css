@@ -26,7 +26,7 @@
 .timezone-container {
 	display: flex;
 	flex-direction: row;
-	justify-content: space-between;
+	justify-content: center;
 	gap: 20px;
 	margin-left: 10px;
 	margin-right: 10px;
