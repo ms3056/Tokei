@@ -1,6 +1,6 @@
-# Weather Plugin
+# Clock
 
-This is a weather plugin for Obsidian (https://obsidian.md).
+This is a clock for Obsidian (https://obsidian.md).
 
 ![image](https://github.com/ms3056/clock-for-obsidian/assets/23712700/6dddf375-8e30-4ba6-a713-c22ebd18e153)
 
