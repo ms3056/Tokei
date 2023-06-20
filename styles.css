@@ -37,7 +37,7 @@
 	flex-direction: column;
 	align-items: center;
 	background-color: rgb(38, 50, 56); /* Deep Blue-Gray */
-	border-radius: 10%;
+	border-radius: 5%;
 	border: 2px solid rgb(55, 71, 79); /* Slightly lighter Blue-Gray for border */
 	width: 100px;
 	margin-bottom: 10px;
@@ -46,13 +46,14 @@
 
 .timezone-name {
 	font-weight: bold;
-	color: ;
+	color: rgb(176, 190, 197);
 }
 
 .timezone-time {
 	color: whitesmoke;
 	font-size: 0.8em;
 }
+
 .addButtonClass, .deleteButtonClass {
 	width: 2em;
 	height: 2em;
