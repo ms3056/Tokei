@@ -1,29 +1,19 @@
-# Dependency directories
-node_modules/
+# vscode
+.vscode 
 
-# TypeScript compiled directory
-dist/
 
-# Log files
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# npm
+node_modules
 
-# Runtime data
-pids
-*.pid
-*.seed
-*.log
+# Don't include the compiled main.js file in the repo.
+# They should be uploaded to GitHub releases instead.
+main.js
 
-# IDE - VSCode
-.vscode
+# Exclude sourcemaps
+*.map
 
-# System Files
+# obsidian
+data.json
+
+# Exclude macOS Finder (System Explorer) View States
 .DS_Store
-Thumbs.db
-
-# Environment variables
-.env
-
-# TypeScript cache
-*.tsbuildinfo

@@ -1,13 +1,9 @@
 {
   "timeFormat": "HH:mm",
   "showDate": true,
-  "dateFormat": "DDD",
+  "dateFormat": "DD",
   "showTimeZone": true,
   "timeZonePairs": [
-    {
-      "name": "HKT",
-      "offset": "+8"
-    },
     {
       "name": "EST",
       "offset": "-4"
@@ -15,8 +11,16 @@
     {
       "name": "IST",
       "offset": "+5.5"
+    },
+    {
+      "name": "HKT",
+      "offset": "+8"
     }
   ],
-  "timezoneFormat": "HH:mm - EEE",
-  "use24HourFormat": false
+  "timezoneFormat": "HH:mm EEE",
+  "weekStart": "sunday",
+  "fiscalYearStart": 1,
+  "showWeekAndQuarter": true,
+  "use24HourFormat": false,
+  "showWeekQuarter": false
 }

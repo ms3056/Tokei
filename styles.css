@@ -1,76 +1,168 @@
-@import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap");
+.theme-dark {
+    --background: #1C2732; /* Dark Gray-Blue */
+    --main-text: #aabed8; /* Light Gray */
+    --secondary-text: #4e5e72; /* Slightly Lighter Dark Gray-Blue */
+    --highlight: #427BBF; /* Dark Blue */
+    --border: #3A4E58; /* Medium Dark Gray-Blue */
+}
+.theme-light {
+    --background: #E5E9F2; /* Light Gray */
+    --main-text: #497FA0; /* Dark Gray-Blue */
+    --secondary-text: #BAC8D1; /* Medium Light Gray */
+    --highlight: #6A85A3; /* Medium Gray-Blue */
+    --border: #88A0B9; /* Light Gray-Blue */
+}
 
+/* to help with validation */
+.red-border {
+    border: 1px solid red !important;
+}
+
+.small-hint {
+    font-family: sans-serif;
+    font-size: 0.8em;
+    color: var(--color-accent);
+}
+
+/* This the the top level container */
 .clock-container {
-	font-family: "Roboto", sans-serif;
-	font-feature-settings: "zero";
-}
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: 'Roboto', sans-serif;
+    /* border: 2px solid rgb(99, 178, 34); */
+  }
+  
+  /* This is the time and date container */
+  .timedate-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    /* border: 2px dashed rgb(100, 18, 45); */
+  }
+  
+  .time {
+    margin: 0;
+    padding: 0;
+    font-size: 4em;
+    font-weight: 900;
+    line-height: 1;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    color: var(--main-text);
+  }
+  
+  .date-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .date {
+    padding: 0;
+    margin: 0;
+    font-size: 2em;
+    color: var(--secondary-text);
+    /* line-break: 1; */
+  }
+  
+  /* Week and Quarter Container */
+  .week-quarter-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    font-size: 0.7em;
+  }
 
-.time-display {
-	margin-top: -2em;
-	display: flex;
-	font-size: 4em;
-	justify-content: center;
-	align-items: center;
-	color: rgb(176, 190, 197);
-}
+  .quarter {
+    color: var(--main-text);
+    margin-bottom: -5px;
+  }
 
-.date-display {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	font-size: 1.3em;
-	margin-top: -3em;
-	color: rgb(93, 119, 133);
-}
+  .week {
+    color: var(--main-text);
+  }
 
+
+  /* Timezone Blocks */
 .timezone-container {
-	display: flex;
-	flex-direction: row;
-	justify-content: center;
-	gap: 10px;
-	margin-left: 10px;
-	margin-right: 10px;
-	margin-top: -2em;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 2px;
+    min-width: 300px;
 }
+
+/* .timezone-pair {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    border: 2px solid var(--border); 
+    max-width: 25%;
+    background-color: var(--background); 
+    border-radius: 10%;
+    backdrop-filter: blur(10px);
+} */
+
+/* .timezone-name {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    color: var(--highlight); 
+    font-weight: bold;
+} */
 
 .timezone-pair {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	background-color: rgb(38, 50, 56); /* Deep Blue-Gray */
-	border-radius: 5%;
-	border: 2px solid rgb(55, 71, 79); /* Slightly lighter Blue-Gray for border */
-	width: 80px;
-	margin-bottom: 10px;
-	color: rgb(176, 190, 197); /* Light Gray for text */
+  display: flex;
+  flex-direction: column; 
+  align-items: center;
+  border: 2px solid var(--border); 
+  max-width: 25%;
+  background-color: var(--background); 
+  border-radius: 10%;
+  backdrop-filter: blur(10px);
 }
 
 .timezone-name {
-	font-weight: bold;
-	color: rgb(176, 190, 197);
-	font-size: 0.8em;
+  color: var(--highlight); 
+  font-weight: bold;
 }
 
 .timezone-time {
-	color: whitesmoke;
-	font-size: 0.7em;
+    overflow-wrap: anywhere;
+    text-align: center;
+    padding: 2px 2px 2px 2px;
+    color: var(--main-text); /* Lighter gray for the time text */
+    font-size: 0.8em;
 }
 
-.addButtonClass, .deleteButtonClass {
-	width: 2em;
-	height: 2em;
-	background-color: #2d2d2d;
-	color: #ffffff;
-	border: 1px solid rgb(49, 0, 49);
-	border-radius: 4px;
-	cursor: pointer;
-	display: flex;
-	justify-content: center;
-	align-items: center;
+
+
+/* Styles for the settings dialog */
+
+.custom-input-width {
+  width: 100px; 
+}
+.addButtonClass,
+.deleteButtonClass {
+    width: 2em;
+    height: 2em;
+    background-color: #2d2d2d;
+    color: #ffffff;
+    border: 1px solid rgb(49, 0, 49);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.addButtonClass:hover, .deleteButtonClass:hover {
-	background-color: rgb(94, 0, 94);
+.addButtonClass:hover,
+.deleteButtonClass:hover {
+    background-color: rgb(94, 0, 94);
 }
 
 .twoButtonsClass {
@@ -78,3 +170,5 @@
     justify-content: flex-end;
     gap: 2px;
 }
+
+

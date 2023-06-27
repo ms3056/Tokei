@@ -1,4 +1,4 @@
-import { DateTime, Info } from "luxon";
+import { DateTime } from "luxon";
 import {
 	addIcon,
 	App,
@@ -15,46 +15,63 @@ import {
 	TextComponent,
 } from "obsidian";
 
+// Define the constant for the ClockView type
 const ClockViewType = "my-clock-view";
 
+// Define the ClockView class that extends ItemView
 class ClockView extends ItemView {
 	private readonly plugin: ClockPlugin;
-	private timeContainer: HTMLElement;
-	private dateContainer: HTMLElement;
+	private updateInterval: NodeJS.Timeout | null = null;
+	// Container elements for time, date, and timezone
+	private timeDateContainer: HTMLElement;
 	private timezoneContainer: HTMLElement;
+	private dateContainer: HTMLElement;
+	private weekQuarterContainer: HTMLElement;
 
 	constructor(leaf: WorkspaceLeaf, plugin: ClockPlugin) {
 		super(leaf);
 		this.plugin = plugin;
 
 		// Create containers for time, date, and timezone
-		this.timeContainer = this.containerEl.createDiv();
-		this.dateContainer = this.containerEl.createDiv();
+		this.timeDateContainer = this.containerEl.createDiv();
 		this.timezoneContainer = this.containerEl.createDiv();
+		this.weekQuarterContainer = this.containerEl.createDiv();
 	}
 
+	// Called when the view is opened
 	public async onOpen(): Promise<void> {
 		this.displayTime();
+		this.updateInterval = setInterval(this.displayTime.bind(this), 1000);
 	}
 
+	// Called when the view is closed
+	public onClose(): Promise<void> {
+		if (this.updateInterval) {
+			clearInterval(this.updateInterval);
+			this.updateInterval = null;
+		}
+		return super.onClose();
+	}
+
+	// Return the ClockView type
 	public getViewType(): string {
 		return ClockViewType;
 	}
 
+	// Return the display text for the view
 	public getDisplayText(): string {
 		return "Clock";
 	}
 
+	// Return the icon for the view
 	public getIcon(): string {
 		return "clock";
 	}
 
-	// Omitted onHeaderMenu function as it is commented out
-
+	// Sort the timezone pairs based on the difference from the current offset
 	private sortTimeZones(): TimezonePair[] {
 		const currentOffset = DateTime.local().offset;
 
-		// Sort the timezone pairs based on the difference from the current offset in descending order
 		return this.plugin.settings.timeZonePairs.slice().sort((a, b) => {
 			const offsetA = parseFloat(a.offset);
 			const offsetB = parseFloat(b.offset);
@@ -66,36 +83,69 @@ class ClockView extends ItemView {
 		});
 	}
 
+	// Display the time, date, and timezone
 	public displayTime(): void {
-		this.timeContainer.empty();
-		this.dateContainer.empty();
-		this.timezoneContainer.empty();
+		this.containerEl.empty();
 
-		// Displaying time based on user's format or default
+		// Create the clock container div and apply the clock-container class
+		const clockContainer = this.containerEl.createDiv();
+		clockContainer.addClass("clock-container");
+
+		// Create the time, date, and timezone containers as child elements of clockContainer
+		this.timeDateContainer = clockContainer.createDiv();
+		this.timeDateContainer.addClass("timedate-container");
+
+		this.timezoneContainer = clockContainer.createDiv();
+
+		// Display the time based on the user's format or default
 		const currentTime = DateTime.local().toFormat(
 			this.plugin.settings.timeFormat
 		);
-		this.timeContainer.createEl("h2", {
-			cls: "time-display",
-			text: currentTime,
-		});
+		this.timeDateContainer.createDiv({ cls: "time", text: currentTime });
 
+		// Display the date if enabled in the plugin settings
 		if (this.plugin.settings.showDate) {
+			this.dateContainer = this.timeDateContainer.createDiv();
+			this.dateContainer.addClass("date-container");
+
 			const currentDate = DateTime.local().toFormat(
 				this.plugin.settings.dateFormat
 			);
-			this.dateContainer.createEl("h2", {
-				cls: "date-display",
-				text: currentDate,
-			});
+			this.dateContainer.createDiv({ cls: "date", text: currentDate });
+
+			this.weekQuarterContainer = this.dateContainer.createDiv();
+			this.weekQuarterContainer.addClass("week-quarter-container");
+
+			// Calculate the week of the quarter
+			const currentWeek = this.calculateWeekOfQuarter();
+
+			// Calculate the quarter based on the fiscal year start
+			const currentQuarter = this.calculateQuarter();
+
+			// Calculate the fiscal year based on the fiscal year start
+			const fiscalYear = this.calculateYear();
+
+			if (this.plugin.settings.showWeekAndQuarter) {
+				const quarterDiv = this.weekQuarterContainer.createDiv({
+					cls: "quarter",
+					text: `FY${fiscalYear}Q${currentQuarter}`,
+				});
+				const weekDiv = this.weekQuarterContainer.createDiv({
+					cls: "week",
+					text: `W${currentWeek}`,
+				});
+			}
 		}
+
+		// Append the clockContainer to the containerEl
+		this.containerEl.appendChild(clockContainer);
 
 		// Sort the timezone pairs
 		const sortedTimeZones = this.sortTimeZones();
 
-		// Update the timezone pairs
+		// Update the timezone pairs if enabled in the plugin settings
 		if (this.plugin.settings.showTimeZone) {
-			const timezoneContainer = this.timezoneContainer.createEl("div", {
+			const timezoneContainer = this.timezoneContainer.createDiv({
 				cls: "timezone-container",
 			});
 
@@ -106,15 +156,15 @@ class ClockView extends ItemView {
 						.plus({ hours: offset })
 						.toFormat(this.plugin.settings.timezoneFormat);
 
-					// Creating timezone pair div and appending name and time divs to it
-					const timezonePair = timezoneContainer.createEl("div", {
+					// Create a div for each timezone pair and append name and time divs to it
+					const timezonePair = timezoneContainer.createDiv({
 						cls: "timezone-pair",
 					});
-					timezonePair.createEl("div", {
+					timezonePair.createDiv({
 						cls: "timezone-name",
 						text: entry.name,
 					});
-					timezonePair.createEl("div", {
+					timezonePair.createDiv({
 						cls: "timezone-time",
 						text: timezoneTime,
 					});
@@ -122,13 +172,73 @@ class ClockView extends ItemView {
 			});
 		}
 	}
+
+	private calculateWeekOfQuarter(): number {
+		const startOfQuarter = DateTime.local().startOf("quarter");
+		const currentDate = DateTime.local();
+		const millisecondsPerWeek = 7 * 24 * 60 * 60 * 1000;
+
+		if (this.plugin.settings.weekStart === "sunday") {
+			const startOfQuarterSunday = startOfQuarter.startOf("week");
+			const daysUntilSunday = 7 - startOfQuarterSunday.weekday;
+			const adjustedStartOfQuarterSunday = startOfQuarterSunday.plus({
+				days: daysUntilSunday,
+			});
+			const diffInWeeks = Math.floor(
+				currentDate.diff(adjustedStartOfQuarterSunday, "milliseconds")
+					.milliseconds / millisecondsPerWeek
+			);
+			const currentWeek = diffInWeeks + 1;
+			return currentWeek === 0 ? 13 : currentWeek;
+		} else {
+			// Luxon default start of the week is Monday
+			const currentWeek = Math.ceil(
+				currentDate.diff(startOfQuarter, "weeks").weeks + 1
+			);
+			return currentWeek === 0 ? 13 : currentWeek;
+		}
+	}
+
+	private calculateQuarter(): number {
+		const fiscalYearStart = this.plugin.settings.fiscalYearStart;
+		const currentMonth = DateTime.local().month;
+		let currentQuarter =
+			Math.floor((currentMonth - fiscalYearStart + 12) / 3) + 1;
+
+		// Adjust the currentQuarter if it exceeds 4
+		if (currentQuarter > 4) {
+			currentQuarter = currentQuarter - 4;
+		}
+
+		return currentQuarter;
+	}
+
+	private calculateYear(): number {
+		const fiscalYearStart = this.plugin.settings.fiscalYearStart;
+		var today = new Date();
+		// Adjust the month to account for JavaScript's 0-based month index
+		var fiscalStartMonth = fiscalYearStart - 1;
+		let year;
+		if (
+			today.getMonth() < fiscalStartMonth ||
+			(today.getMonth() === fiscalStartMonth && today.getDate() === 1)
+		) {
+			year = today.getFullYear() + 1;
+		} else {
+			year = today.getFullYear();
+		}
+		// Return only the last two digits of the year
+		return year % 100;
+	}
 }
 
+// Interface for timezone pairs
 interface TimezonePair {
 	name: string;
 	offset: string;
 }
 
+// Interface for plugin settings
 interface ClockSettings {
 	timeFormat: string;
 	showDate: boolean;
@@ -136,102 +246,117 @@ interface ClockSettings {
 	showTimeZone: boolean;
 	timeZonePairs: TimezonePair[];
 	timezoneFormat: string;
+	weekStart: "sunday" | "monday";
+	fiscalYearStart: number;
+	showWeekAndQuarter: boolean;
 }
 
+// Default plugin settings
 const DEFAULT_SETTINGS: ClockSettings = {
 	timeFormat: "HH:mm",
 	showDate: true,
-	dateFormat: "EEE - dd",
+	dateFormat: "DDD",
 	showTimeZone: true,
-	timeZonePairs: [{ name: "", offset: "" }],
-	timezoneFormat: "HH:mm - EEEEE",
+	timeZonePairs: [
+		{
+			name: "",
+			offset: "",
+		},
+	],
+	timezoneFormat: "HH:mm EEE",
+	weekStart: "sunday",
+	fiscalYearStart: 1,
+	showWeekAndQuarter: true,
 };
 
+// Define the ClockPlugin class that extends Plugin
 export default class ClockPlugin extends Plugin {
-	public view: ClockView;
-	public settings: ClockSettings;
+	view: ClockView;
+	settings: ClockSettings;
+	updateInterval: NodeJS.Timeout | null = null;
 
+	// Load plugin settings, register the ClockView, add the 'Open Clock' command, and set up layout readiness check
 	public async onload(): Promise<void> {
-		// console.log("Clock: Loading plugin v" + this.manifest.version);
-
-		// Load plugin settings, using default values if no saved settings are found
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
 			await this.loadData()
 		);
 
-		// Register the ClockView with the plugin
 		this.registerView(
 			ClockViewType,
 			(leaf) => (this.view = new ClockView(leaf, this))
 		);
 
-		// Add the 'Open Clock' command to open the Clock plugin
 		this.addCommand({
-			id: "clock-open",
-			name: "Open Clock",
-			callback: async () => {
-				let [leaf] = this.app.workspace.getLeavesOfType(ClockViewType);
-				if (!leaf) {
-					leaf = this.app.workspace.getRightLeaf(false);
-					if (leaf) {
-						await leaf.setViewState({ type: ClockViewType });
-					} else {
-						// Handle case where leaf is null or undefined
-					}
-				}
-				if (leaf) {
-					this.app.workspace.revealLeaf(leaf);
-				}
-			},
+			id: "open",
+			name: "open",
+			callback: this.onShow.bind(this),
 		});
 
-		// Initialize the Clock plugin view
-		if (this.app.workspace.layoutReady) {
-			await this.initView();
-		} else {
-			const checkLayoutInterval = setInterval(async () => {
-				if (this.app.workspace.layoutReady) {
-					await this.initView();
-					clearInterval(checkLayoutInterval);
-				}
-			}, 1000);
-		}
+		let isViewInitialized = false;
 
-		// Add the ClockSettingTab to the plugin's settings
+		const checkLayoutInterval = setInterval(async () => {
+			if (this.app.workspace.layoutReady && !isViewInitialized) {
+				await this.initView();
+				isViewInitialized = true;
+				clearInterval(checkLayoutInterval);
+			}
+		}, 1000);
+
+		this.app.workspace.onLayoutReady(async () => {
+			if (!isViewInitialized) {
+				await this.initView();
+				isViewInitialized = true;
+				clearInterval(checkLayoutInterval);
+			}
+		});
+
 		this.addSettingTab(new ClockSettingTab(this.app, this));
 	}
 
+	// Clear the update interval when the plugin is unloaded
 	public onunload(): void {
-		// console.log("Clock: Unloading plugin");
-		this.app.workspace.detachLeavesOfType(ClockViewType);
+		if (this.updateInterval) {
+			clearInterval(this.updateInterval);
+			this.updateInterval = null;
+		}
 	}
 
+	// Open the Clock view when the 'Open Clock' command is invoked
+	public onShow(): void {
+		this.initView();
+	}
+
+	// Initialize the Clock view and set up the update interval
 	private async initView(): Promise<void> {
-		let [leaf] = this.app.workspace.getLeavesOfType(ClockViewType);
-		if (!leaf) {
-			leaf = this.app.workspace.getLeaf();
-			if (leaf) {
-				await leaf.setViewState({ type: ClockViewType });
-			} else {
-				// Handle case where leaf is null or undefined
-			}
+		if (this.app.workspace.getLeavesOfType(ClockViewType).length) {
+			return;
 		}
+		const leaf = this.app.workspace.getRightLeaf(false);
 		if (leaf) {
+			await leaf.setViewState({ type: ClockViewType });
 			this.app.workspace.revealLeaf(leaf);
-		}
-		this.view.displayTime();
-		setInterval(() => {
 			this.view.displayTime();
-		}, 1000);
+			this.updateInterval = setInterval(
+				this.view.displayTime.bind(this.view),
+				1000
+			);
+		}
 	}
 
+	// Save plugin settings
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
 	}
 }
 
+function createHintElement(): HTMLElement {
+	const hint = document.createElement("small");
+	hint.classList.add("small-hint");
+	return hint;
+}
+// Settings for the app
 class ClockSettingTab extends PluginSettingTab {
 	private readonly plugin: ClockPlugin;
 
@@ -243,7 +368,7 @@ class ClockSettingTab extends PluginSettingTab {
 	public display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
-		containerEl.createEl("h1", { text: "Clock Settings" });
+		containerEl.createEl("h1", { text: "Clock" });
 
 		// Add a link to the Luxon reference
 		let h2El = containerEl.createEl("p", {
@@ -257,37 +382,30 @@ class ClockSettingTab extends PluginSettingTab {
 			},
 		});
 
-		let textField: TextComponent;
-
-		// Time Format Settings
-		new Setting(containerEl)
+		// Time Format Setting
+		const timeFormatInput = new Setting(containerEl)
 			.setName("Time format")
-			.setDesc(
-				createFragment((fragment) => {
-					fragment.append(
-						"Default Luxon format is ",
-						fragment.createEl("code", {
-							text: "HH:mm",
-						})
-					);
-				})
-			)
+			.setDesc("Default Luxon format is HH:mm")
 			.addText((text) => {
-				textField = text
+				const textField = text
 					.setPlaceholder("Enter the time format")
 					.setValue(this.plugin.settings.timeFormat);
 
-				// Only save the setting when 'Enter' is pressed
-				textField.inputEl.onkeypress = async (e) => {
-					if (e.key === "Enter") {
-						e.preventDefault();
-						this.plugin.settings.timeFormat =
-							textField.inputEl.value;
-						await this.plugin.saveData(this.plugin.settings);
+				const hint = document.createElement("small");
+				hint.classList.add("small-hint");
+				textField.inputEl.after(hint);
+
+				textField.inputEl.addEventListener("input", () => {
+					const value = textField.getValue();
+					if (value.trim() !== "") {
+						this.plugin.settings.timeFormat = value;
+						this.plugin.saveSettings();
 						this.plugin.view.displayTime();
-						textField.inputEl.blur(); // Lose focus
+						hint.textContent = ""; // Remove the hint
+					} else {
+						hint.textContent = "Enter a format"; // Show the hint
 					}
-				};
+				});
 			})
 			.addExtraButton((button) =>
 				button
@@ -296,16 +414,28 @@ class ClockSettingTab extends PluginSettingTab {
 					.onClick(async () => {
 						this.plugin.settings.timeFormat =
 							DEFAULT_SETTINGS.timeFormat;
-						await this.plugin.saveData(this.plugin.settings);
+						await this.plugin.saveSettings();
 						this.plugin.view.displayTime();
-
-						// Update the value in the text field to reflect the reset value
-						textField.setValue(this.plugin.settings.timeFormat);
+						const timeFormatInputEl =
+							timeFormatInput.settingEl.querySelector("input");
+						const hint =
+							timeFormatInput.settingEl.querySelector("small");
+						if (timeFormatInputEl instanceof HTMLInputElement) {
+							timeFormatInputEl.value =
+								this.plugin.settings.timeFormat;
+						}
+						if (hint instanceof HTMLElement) {
+							hint.textContent = ""; // Remove the hint
+						}
+						new Notice("Time Format Reset");
 					})
 			);
 
-		// Date Format Settings
-		new Setting(containerEl)
+		timeFormatInput.settingEl.style.borderTop = "none";
+		timeFormatInput.settingEl.style.borderBottom = "none";
+
+		// Show Date Setting
+		const showDateSetting = new Setting(containerEl)
 			.setName("Show date")
 			.setDesc("Enable to show the date.")
 			.addToggle((toggle) => {
@@ -313,7 +443,7 @@ class ClockSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.showDate)
 					.onChange(async (value) => {
 						this.plugin.settings.showDate = value;
-						await this.plugin.saveData(this.plugin.settings);
+						await this.plugin.saveSettings();
 
 						const clockView = this.app.workspace
 							.getLeavesOfType("my-clock-view")
@@ -323,65 +453,133 @@ class ClockSettingTab extends PluginSettingTab {
 						}
 
 						// Show or hide the Date Format setting based on the toggle value
-						if (value) {
-							dateFormatSetting.settingEl.style.display = "";
-						} else {
-							dateFormatSetting.settingEl.style.display = "none";
-						}
+						dateFormatSetting.settingEl.style.display = value
+							? ""
+							: "none";
+
+						// Show or hide the Show Week and Quarter setting and its corresponding settings based on the toggle value
+						showWeekAndQuarterSetting.settingEl.style.display =
+							value ? "" : "none";
+						weekStartSetting.settingEl.style.display = value
+							? ""
+							: "none";
+						yearStartSetting.settingEl.style.display = value
+							? ""
+							: "none";
+						weekQuarterContainer.style.display = value
+							? ""
+							: "none";
 					});
 			});
 
-		let dateFormatSetting = new Setting(containerEl)
+		showDateSetting.settingEl.style.borderBottom = "none";
+		showDateSetting.settingEl.style.fontWeight = "bold";
+
+		// Date Format Setting
+		const dateFormatSetting = new Setting(containerEl)
 			.setName("Date format")
-			.setDesc(
-				createFragment((fragment) => {
-					fragment.append(
-						"Default Luxon format is ",
-						fragment.createEl("code", {
-							text: "DDD",
-						})
-					);
-				})
-			)
+			.setDesc("Default Luxon format is DDD")
 			.addText((text) => {
-				let textField = text
+				const textField = text
 					.setPlaceholder("Enter the date format")
 					.setValue(this.plugin.settings.dateFormat);
 
-				textField.inputEl.onkeypress = async (e) => {
-					if (e.key === "Enter") {
-						e.preventDefault();
-						this.plugin.settings.dateFormat =
-							textField.inputEl.value;
-						await this.plugin.saveData(this.plugin.settings);
-						const clockView = this.app.workspace
-							.getLeavesOfType("my-clock-view")
-							.find((leaf) => leaf.view instanceof ClockView);
-						if (clockView) {
-							(clockView.view as ClockView).displayTime();
-						}
-						textField.inputEl.blur();
-					}
-				};
+				const hint = document.createElement("small");
+				hint.classList.add("small-hint");
+				textField.inputEl.after(hint);
 
-				// Show or hide the setting based on the 'Show Date' toggle value
-				if (!this.plugin.settings.showDate) {
-					textField.inputEl.style.display = "none";
-				}
+				textField.inputEl.addEventListener("input", () => {
+					const value = textField.getValue();
+					if (value.trim() !== "") {
+						this.plugin.settings.dateFormat = value;
+						this.plugin.saveSettings();
+						this.plugin.view.displayTime();
+						hint.textContent = ""; // Remove the hint
+					} else {
+						hint.textContent = "Enter a format"; // Show the hint
+					}
+				});
 			})
-			.addExtraButton((button) => {
+			.addExtraButton((button) =>
 				button
 					.setIcon("reset")
 					.setTooltip("Reset date format")
 					.onClick(async () => {
 						this.plugin.settings.dateFormat =
 							DEFAULT_SETTINGS.dateFormat;
-						await this.plugin.saveData(this.plugin.settings);
-						this.display();
+						await this.plugin.saveSettings();
+						this.plugin.view.displayTime();
+						const dateFormatInputEl =
+							dateFormatSetting.settingEl.querySelector("input");
+						const hint =
+							dateFormatSetting.settingEl.querySelector("small");
+						if (dateFormatInputEl instanceof HTMLInputElement) {
+							dateFormatInputEl.value =
+								this.plugin.settings.dateFormat;
+						}
+						if (hint instanceof HTMLElement) {
+							hint.textContent = ""; // Remove the hint
+						}
 						new Notice("Date Format Reset");
+					})
+			);
+		dateFormatSetting.settingEl.style.borderTop = "none";
+		dateFormatSetting.settingEl.style.borderBottom = "none";
+		dateFormatSetting.settingEl.style.marginLeft = "20px";
 
+		// Week and Quarter settings
+		const showWeekAndQuarterSetting = new Setting(containerEl)
+			.setName("Show Fiscal Date")
+			.setDesc(
+				"Enable to show the Fiscal Year & Quarter and the Week of the Quarter."
+			)
+			.addToggle((toggle) => {
+				toggle
+					.setValue(this.plugin.settings.showWeekAndQuarter)
+					.onChange(async (value) => {
+						this.plugin.settings.showWeekAndQuarter = value;
+						await this.plugin.saveSettings();
 						const clockView = this.app.workspace
-							.getLeavesOfType("my-clock-view")
+							.getLeavesOfType(ClockViewType)
+							.find((leaf) => leaf.view instanceof ClockView);
+						if (clockView) {
+							(clockView.view as ClockView).displayTime();
+						}
+
+						// Hide or show the Week Starts On and Year Starts On settings based on the toggle value
+						weekStartSetting.settingEl.style.display = value
+							? ""
+							: "none";
+						yearStartSetting.settingEl.style.display = value
+							? ""
+							: "none";
+						weekQuarterContainer.style.display = value
+							? ""
+							: "none";
+					});
+			});
+
+		showWeekAndQuarterSetting.settingEl.style.marginLeft = "20px";
+		showWeekAndQuarterSetting.settingEl.style.borderBottom = "none";
+		showWeekAndQuarterSetting.settingEl.style.fontWeight = "bold";
+
+		// Week Starts On Setting
+		const weekStartSetting = new Setting(containerEl)
+			.setName("Week Starts On")
+			.setDesc(
+				"Select the start day of the week. This affects the week of the quarter calculation."
+			)
+			.addDropdown((dropdown) => {
+				dropdown
+					.addOptions({ sunday: "Sunday", monday: "Monday" })
+					.setValue(this.plugin.settings.weekStart)
+					.onChange(async (value) => {
+						this.plugin.settings.weekStart = value as
+							| "sunday"
+							| "monday";
+						await this.plugin.saveSettings();
+						const clockView = this.app.workspace
+							.getLeavesOfType(ClockViewType)
 							.find((leaf) => leaf.view instanceof ClockView);
 						if (clockView) {
 							(clockView.view as ClockView).displayTime();
@@ -389,188 +587,110 @@ class ClockSettingTab extends PluginSettingTab {
 					});
 			});
 
-		// Show Timezone Toggle
-		new Setting(containerEl)
-			.setName("Show Timezone")
-			.setDesc("Enable to show the timezone.")
+		weekStartSetting.settingEl.style.marginLeft = "40px";
+		weekStartSetting.settingEl.style.borderTop = "none";
+
+		// Year Starts On Setting
+		const yearStartSetting = new Setting(containerEl)
+			.setName("Year Starts On")
+			.setDesc("Select the start of your fiscal quarter.")
+			.addDropdown((dropdown) => {
+				const monthOptions: Record<string, string> = {
+					"1": "January",
+					"2": "February",
+					"3": "March",
+					"4": "April",
+					"5": "May",
+					"6": "June",
+					"7": "July",
+					"8": "August",
+					"9": "September",
+					"10": "October",
+					"11": "November",
+					"12": "December",
+				};
+
+				dropdown
+					.addOptions(monthOptions)
+					.setValue(this.plugin.settings.fiscalYearStart.toString())
+					.onChange(async (value) => {
+						this.plugin.settings.fiscalYearStart = parseInt(value);
+						await this.plugin.saveSettings();
+						const clockView = this.app.workspace
+							.getLeavesOfType(ClockViewType)
+							.find((leaf) => leaf.view instanceof ClockView);
+						if (clockView) {
+							(clockView.view as ClockView).displayTime();
+						}
+					});
+			});
+
+		yearStartSetting.settingEl.style.marginLeft = "40px";
+		yearStartSetting.settingEl.style.borderTop = "none";
+
+		// Week and Quarter Container
+		const weekQuarterContainer = containerEl.createDiv();
+		weekQuarterContainer.style.display = this.plugin.settings
+			.showWeekAndQuarter
+			? ""
+			: "none";
+		// Remove horizontal line
+
+		// Show Timezones Setting
+		const showTimezonesSetting = new Setting(containerEl)
+			.setName("Show timezones")
+			.setDesc("Enable to show the timezones.")
 			.addToggle((toggle) => {
 				toggle
 					.setValue(this.plugin.settings.showTimeZone)
 					.onChange(async (value) => {
 						this.plugin.settings.showTimeZone = value;
-						await this.plugin.saveData(this.plugin.settings);
+						await this.plugin.saveSettings();
+
 						const clockView = this.app.workspace
-							.getLeavesOfType("clock-view")
+							.getLeavesOfType("my-clock-view")
 							.find((leaf) => leaf.view instanceof ClockView);
 						if (clockView) {
 							(clockView.view as ClockView).displayTime(); // Update the clock immediately
 						}
 
-						// Show or hide the Timezone settings based on the toggle value
-						timezoneSetting.settingEl.style.display = value
-							? ""
-							: "none";
+						// Show or hide the Timezone Format and Timezone Pairs settings based on the toggle value
 						timezoneFormatSetting.settingEl.style.display = value
 							? ""
 							: "none";
+						timezonePairsSetting.settingEl.style.display = value
+							? ""
+							: "none";
 					});
 			});
 
-		// Timezone Settings
-		let timezoneSetting = new Setting(containerEl)
-			.setName("Timezone settings")
-			.setDesc(
-				createFragment((fragment) => {
-					fragment.append(
-						"Enter your timezone pairs.",
-						fragment.createEl("a", {
-							text: " Reference",
-							href: "https://www.timeanddate.com/time/map/",
-						}),
-						fragment.createEl("br"),
-						fragment.createEl("br"),
-						"Click ENTER after each name or offset entry.",
-						fragment.createEl("br"),
-						fragment.createEl("br"),
-						"Names and Offset pairs are not validated."
-					);
-				})
-			);
+		showTimezonesSetting.settingEl.style.fontWeight = "bold";
+		showTimezonesSetting.settingEl.style.borderBottom = "none";
 
-		let timezoneSettingDiv = timezoneSetting.settingEl.createEl("div"); // Here is where we will attach the table
-
-		if (this.plugin.settings.showTimeZone) {
-			const table = timezoneSettingDiv.createEl("table");
-			const headerRow = table.createEl("tr");
-			headerRow.createEl("th", { text: "Timezone Name" });
-			headerRow.createEl("th", { text: "Timezone Offset" });
-			headerRow.createEl("th", { text: "" });
-
-			this.plugin.settings.timeZonePairs.forEach((entry, index) => {
-				const row = table.createEl("tr");
-
-				// Timezone Name input field
-				const nameCell = row.createEl("td");
-				const nameInput = nameCell.createEl("input", {
-					type: "text",
-					value: entry.name,
-				});
-
-				// Save the settings when Enter is pressed in the Name input field
-				const saveSettings = async () => {
-					if (
-						nameInput.value.trim() !== "" &&
-						offsetInput.value.trim() !== ""
-					) {
-						this.plugin.settings.timeZonePairs[index].name =
-							nameInput.value;
-						this.plugin.settings.timeZonePairs[index].offset =
-							offsetInput.value;
-						await this.plugin.saveSettings();
-					}
-				};
-
-				nameInput.addEventListener("keydown", async (e) => {
-					if (e.key === "Enter") {
-						e.preventDefault();
-						await saveSettings();
-						nameInput.blur();
-					}
-				});
-
-				// Timezone Offset input field
-				const offsetCell = row.createEl("td");
-				const offsetInput = offsetCell.createEl("input", {
-					type: "text",
-					value: entry.offset,
-				});
-
-				offsetInput.addEventListener("keydown", async (e) => {
-					if (e.key === "Enter") {
-						e.preventDefault();
-						await saveSettings();
-						offsetInput.blur();
-					}
-				});
-
-				// Buttons for deleting and adding timezone entries
-				const buttonsCell = row.createEl("td");
-
-				if (index !== 0) {
-					const deleteButton = buttonsCell.createEl("button", {
-						text: "-",
-					});
-					deleteButton.classList.add("deleteButtonClass");
-					deleteButton.addEventListener("click", async () => {
-						this.plugin.settings.timeZonePairs.splice(index, 1);
-						await this.plugin.saveSettings();
-						this.display();
-					});
-				}
-
-				if (index === this.plugin.settings.timeZonePairs.length - 1) {
-					const addButton = buttonsCell.createEl("button", {
-						text: "+",
-					});
-					addButton.classList.add("addButtonClass");
-					addButton.addEventListener("click", async () => {
-						// Limit timezone entries to 5
-						if (this.plugin.settings.timeZonePairs.length < 5) {
-							this.plugin.settings.timeZonePairs.push({
-								name: "",
-								offset: "",
-							});
-							this.display();
-						} else {
-							// Max entries reached
-							new Notice("Maximum timezone entries added.");
-						}
-					});
-				}
-
-				if (
-					index !== 0 &&
-					index === this.plugin.settings.timeZonePairs.length - 1
-				) {
-					buttonsCell.classList.add("twoButtonsClass");
-				}
-			});
-		}
-
-		let timezoneFormatField: TextComponent;
-
-		let timezoneFormatSetting = new Setting(containerEl)
+		// Timezone Format Setting
+		const timezoneFormatSetting = new Setting(containerEl)
 			.setName("Timezone Format")
-			.setDesc(
-				createFragment((fragment) => {
-					fragment.append(
-						"Default Luxon format is ",
-						fragment.createEl("code", {
-							text: "HH:mm - EEEEE",
-						})
-					);
-				})
-			)
+            .setDesc("Default Luxon format is HH:mm EEE")
 			.addText((text) => {
-				timezoneFormatField = text
+				const textField = text
 					.setPlaceholder("Enter the timezone format")
 					.setValue(this.plugin.settings.timezoneFormat);
 
-				timezoneFormatField.inputEl.onkeypress = async (e) => {
-					if (e.key === "Enter") {
-						e.preventDefault();
-						this.plugin.settings.timezoneFormat =
-							timezoneFormatField.inputEl.value;
-						await this.plugin.saveData(this.plugin.settings);
-						const clockView = this.app.workspace
-							.getLeavesOfType("clock-view")
-							.find((leaf) => leaf.view instanceof ClockView);
-						if (clockView) {
-							(clockView.view as ClockView).displayTime();
-						}
-						timezoneFormatField.inputEl.blur();
+				const hint = document.createElement("small");
+				hint.classList.add("small-hint");
+				textField.inputEl.after(hint);
+
+				textField.inputEl.addEventListener("input", () => {
+					const value = textField.getValue();
+					if (value.trim() !== "") {
+						this.plugin.settings.timezoneFormat = value;
+						this.plugin.saveSettings();
+						this.plugin.view.displayTime();
+						hint.textContent = ""; // Remove the hint
+					} else {
+						hint.textContent = "Enter a format"; // Show the hint
 					}
-				};
+				});
 			})
 			.addExtraButton((button) =>
 				button
@@ -579,24 +699,220 @@ class ClockSettingTab extends PluginSettingTab {
 					.onClick(async () => {
 						this.plugin.settings.timezoneFormat =
 							DEFAULT_SETTINGS.timezoneFormat;
-						await this.plugin.saveData(this.plugin.settings);
+						await this.plugin.saveSettings();
 						this.plugin.view.displayTime();
-
-						// Update the value in the text field to reflect the reset value
-						timezoneFormatField.setValue(
-							this.plugin.settings.timezoneFormat
-						);
+						const timezoneFormatInputEl =
+							timezoneFormatSetting.settingEl.querySelector(
+								"input"
+							);
+						const hint =
+							timezoneFormatSetting.settingEl.querySelector(
+								"small"
+							);
+						if (timezoneFormatInputEl instanceof HTMLInputElement) {
+							timezoneFormatInputEl.value =
+								this.plugin.settings.timezoneFormat;
+						}
+						if (hint instanceof HTMLElement) {
+							hint.textContent = ""; // Remove the hint
+						}
+						new Notice("Timezone Format Reset");
 					})
 			);
 
-		// Add these lines to remove the borders
-		dateFormatSetting.settingEl.style.borderTop = "none";
-		timezoneSetting.settingEl.style.borderTop = "none";
 		timezoneFormatSetting.settingEl.style.borderTop = "none";
 
-		if (!this.plugin.settings.showTimeZone) {
-			timezoneSetting.settingEl.style.display = "none";
-			timezoneFormatSetting.settingEl.style.display = "none";
-		}
+		// Timezone Pairs Setting
+		const timezonePairsSetting = new Setting(containerEl)
+			.setName("Timezone settings")
+			// .setDesc(
+			// 	"Enter the timezones you would like to display. A maximum of 5 are allowed."
+			// );
+
+            .setDesc(
+				createFragment((fragment) => {
+					fragment.append(
+						"Enter the timezones you would like to display.",
+                        fragment.createEl("br"),
+                        fragment.createEl("br"),
+                        "Example: enter EST for name and -4 for offset.",
+                        fragment.createEl("br"),
+						fragment.createEl("a", {
+							text: "Timzone offset Reference",
+							href: "https://www.timeanddate.com/time/map/",
+						}),
+                        fragment.createEl("br"),
+                        fragment.createEl("br"),
+                        " A maximum of 5 timezones are allowed.",
+						fragment.createEl("br"),
+                        fragment.createEl("br"),
+						"Timezone Name and Offset pairs are not validated.",
+
+					);
+				})
+			);
+
+		const timezoneTable = timezonePairsSetting.settingEl.createEl("table");
+		const timezoneTableHeader = timezoneTable.createEl("tr");
+		timezoneTableHeader.createEl("th", { text: "Name" });
+		timezoneTableHeader.createEl("th", { text: "Offset" });
+		timezoneTableHeader.createEl("th", { text: "" });
+
+		this.plugin.settings.timeZonePairs.forEach((entry, index) => {
+			const row = timezoneTable.createEl("tr");
+
+			const nameCell = row.createEl("td");
+            const nameInput = nameCell.createEl("input", {
+                type: "text",
+                value: entry.name,
+            });
+            nameInput.classList.add("custom-input-width");
+
+			const hint = createHintElement();
+
+            function handleInput() {
+                const newName = nameInput.value.trim();
+                if (newName !== "") {
+                    entry.name = newName;
+                    this.plugin.saveSettings();
+                    this.plugin.view.displayTime();
+                    hint.textContent = ""; 
+                } else {
+                    hint.textContent = "Invalid format"; 
+                }
+            }
+
+            nameInput.addEventListener("input", handleInput);
+            nameInput.addEventListener("focus", handleInput);
+
+			const offsetCell = row.createEl("td");
+			const offsetInput = offsetCell.createEl("input", {
+				type: "text",
+				value: entry.offset,
+			});
+
+            offsetInput.classList.add("custom-input-width");
+
+            const handleOffsetChange = () => {
+                const newOffset = offsetInput.value.trim();
+                if (this.isValidTimeZoneOffset(newOffset)) {
+                    entry.offset = newOffset;
+                    this.plugin.saveSettings();
+                    this.plugin.view.displayTime();
+                    hint.textContent = ""; 
+                } else {
+                    hint.textContent = "Invalid format"; 
+                }
+            };
+            
+            offsetInput.addEventListener("input", handleOffsetChange);
+            offsetInput.addEventListener("focus", handleOffsetChange);
+            
+			offsetCell.appendChild(hint);
+
+			const buttonsCell = row.createEl("td");
+			if (index !== 0) {
+				const deleteButton = buttonsCell.createEl("button", {
+					text: "-",
+				});
+				deleteButton.classList.add("deleteButtonClass");
+				deleteButton.addEventListener("click", async () => {
+					this.plugin.settings.timeZonePairs.splice(index, 1);
+					await this.plugin.saveSettings();
+					this.display();
+				});
+			}
+
+			if (index === this.plugin.settings.timeZonePairs.length - 1) {
+				const addButton = buttonsCell.createEl("button", { text: "+" });
+				addButton.classList.add("addButtonClass");
+				// Add event listener for the "Add" button
+				addButton.addEventListener("click", async () => {
+					if (this.plugin.settings.timeZonePairs.length < 5) {
+						this.plugin.settings.timeZonePairs.push({
+							name: "",
+							offset: "",
+						});
+						await this.plugin.saveSettings();
+						this.display();
+
+						// Get the index of the newly added cell
+						const newIndex =
+							this.plugin.settings.timeZonePairs.length - 1;
+
+						// Get the corresponding input elements
+						const newNameInput = timezoneTable.querySelectorAll(
+							'input[name="timezone-name"]'
+						)[newIndex] as HTMLInputElement;
+						const newOffsetInput = timezoneTable.querySelectorAll(
+							'input[name="timezone-offset"]'
+						)[newIndex] as HTMLInputElement;
+
+						// Validate and display hint for the newly added cell
+						validateAndDisplayHint(newNameInput, newOffsetInput);
+					} else {
+						new Notice("Maximum timezone entries added.");
+					}
+				});
+			}
+
+			if (
+				index !== 0 &&
+				index === this.plugin.settings.timeZonePairs.length - 1
+			) {
+				buttonsCell.classList.add("twoButtonsClass");
+			}
+		});
+
+		const validateAndDisplayHint = (
+			nameInput: HTMLInputElement,
+			offsetInput: HTMLInputElement
+		) => {
+			// Validate name input
+			const newName = nameInput.value.trim();
+			if (newName === "") {
+				nameInput.classList.add("invalid-input");
+				nameInput.title = "Invalid format";
+			} else {
+				nameInput.classList.remove("invalid-input");
+				nameInput.removeAttribute("title");
+			}
+
+			// Validate offset input
+			const newOffset = offsetInput.value.trim();
+			if (!this.isValidTimeZoneOffset(newOffset)) {
+				offsetInput.classList.add("invalid-input");
+				offsetInput.title = "Invalid format";
+			} else {
+				offsetInput.classList.remove("invalid-input");
+				offsetInput.removeAttribute("title");
+			}
+		};
+
+		timezonePairsSetting.settingEl.style.borderTop = "none";
+		timezonePairsSetting.settingEl.style.borderBottom = "none";
+
+		// Show or hide settings based on the initial values of toggle switches
+		dateFormatSetting.settingEl.style.display = this.plugin.settings
+			.showDate
+			? ""
+			: "none";
+		timeFormatInput.settingEl.style.display = this.plugin.settings.showDate
+			? ""
+			: "none";
+		timezoneFormatSetting.settingEl.style.display = this.plugin.settings
+			.showTimeZone
+			? ""
+			: "none";
+		timezonePairsSetting.settingEl.style.display = this.plugin.settings
+			.showTimeZone
+			? ""
+			: "none";
+	}
+
+	private isValidTimeZoneOffset(offset: string): boolean {
+		const offsetRegex =
+			/^([-+]?((1[0-2]|0?[1-9])(\.\d+)?|0?\.5))|(\+1[0-4](\.\d+)?|0)$/;
+		return offsetRegex.test(offset);
 	}
 }
