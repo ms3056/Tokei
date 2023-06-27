@@ -200,36 +200,25 @@ class ClockView extends ItemView {
 	}
 
 	private calculateQuarter(): number {
-		const fiscalYearStart = this.plugin.settings.fiscalYearStart;
-		const currentMonth = DateTime.local().month;
-		let currentQuarter =
-			Math.floor((currentMonth - fiscalYearStart + 12) / 3) + 1;
-
-		// Adjust the currentQuarter if it exceeds 4
-		if (currentQuarter > 4) {
-			currentQuarter = currentQuarter - 4;
-		}
-
-		return currentQuarter;
+		const fiscalYearStart = this.plugin.settings.fiscalYearStart - 1; // Adjust for JavaScript's 0-based month index
+		let today = new Date();
+		let month = today.getMonth();
+		let monthIndex = ((month - fiscalYearStart) + 12) % 12;
+		return ~~(monthIndex / 3) + 1;
 	}
 
 	private calculateYear(): number {
-		const fiscalYearStart = this.plugin.settings.fiscalYearStart;
-		var today = new Date();
-		// Adjust the month to account for JavaScript's 0-based month index
-		var fiscalStartMonth = fiscalYearStart - 1;
-		let year;
-		if (
-			today.getMonth() < fiscalStartMonth ||
-			(today.getMonth() === fiscalStartMonth && today.getDate() === 1)
-		) {
-			year = today.getFullYear() + 1;
-		} else {
-			year = today.getFullYear();
-		}
+		const fiscalYearStart = this.plugin.settings.fiscalYearStart - 1; // Adjust for JavaScript's 0-based month index
+		let today = new Date();
+		let year = today.getFullYear();
+		let month = today.getMonth();
+		let yearOffset = Math.floor((month - ((fiscalYearStart % 12) || 12)) / 12) + 1;
+		year = yearOffset + year;
 		// Return only the last two digits of the year
 		return year % 100;
 	}
+	
+	
 }
 
 // Interface for timezone pairs
@@ -593,7 +582,7 @@ class ClockSettingTab extends PluginSettingTab {
 		// Year Starts On Setting
 		const yearStartSetting = new Setting(containerEl)
 			.setName("Year Starts On")
-			.setDesc("Select the start of your fiscal quarter.")
+			.setDesc("Select the start of your fiscal year. Select January for default.")
 			.addDropdown((dropdown) => {
 				const monthOptions: Record<string, string> = {
 					"1": "January",
