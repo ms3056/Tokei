@@ -200,25 +200,28 @@ class ClockView extends ItemView {
 	}
 
 	private calculateQuarter(): number {
-		const fiscalYearStart = this.plugin.settings.fiscalYearStart - 1; // Adjust for JavaScript's 0-based month index
+		// Adjust for 0 based reference - we are saving the actual month number
+		// In the settings so -1 is the adjustment
+		const fiscalYearStart = this.plugin.settings.fiscalYearStart - 1;
 		let today = new Date();
 		let month = today.getMonth();
-		let monthIndex = ((month - fiscalYearStart) + 12) % 12;
+		let monthIndex = (month - fiscalYearStart + 12) % 12;
 		return ~~(monthIndex / 3) + 1;
 	}
 
 	private calculateYear(): number {
-		const fiscalYearStart = this.plugin.settings.fiscalYearStart - 1; // Adjust for JavaScript's 0-based month index
+		// Adjust for 0 based reference - we are saving the actual month number
+		// In the settings so -1 is the adjustment
+		const fiscalYearStart = this.plugin.settings.fiscalYearStart - 1;
 		let today = new Date();
 		let year = today.getFullYear();
 		let month = today.getMonth();
-		let yearOffset = Math.floor((month - ((fiscalYearStart % 12) || 12)) / 12) + 1;
+		let yearOffset =
+			Math.floor((month - (fiscalYearStart % 12 || 12)) / 12) + 1;
 		year = yearOffset + year;
 		// Return only the last two digits of the year
 		return year % 100;
 	}
-	
-	
 }
 
 // Interface for timezone pairs
@@ -264,7 +267,8 @@ export default class ClockPlugin extends Plugin {
 	settings: ClockSettings;
 	updateInterval: NodeJS.Timeout | null = null;
 
-	// Load plugin settings, register the ClockView, add the 'Open Clock' command, and set up layout readiness check
+	// Load plugin settings, register the ClockView, add the 'Open Clock'
+	// command, and set up layout readiness check
 	public async onload(): Promise<void> {
 		this.settings = Object.assign(
 			{},
@@ -390,9 +394,9 @@ class ClockSettingTab extends PluginSettingTab {
 						this.plugin.settings.timeFormat = value;
 						this.plugin.saveSettings();
 						this.plugin.view.displayTime();
-						hint.textContent = ""; // Remove the hint
+						hint.textContent = "";
 					} else {
-						hint.textContent = "Enter a format"; // Show the hint
+						hint.textContent = "Enter a format";
 					}
 				});
 			})
@@ -414,7 +418,7 @@ class ClockSettingTab extends PluginSettingTab {
 								this.plugin.settings.timeFormat;
 						}
 						if (hint instanceof HTMLElement) {
-							hint.textContent = ""; // Remove the hint
+							hint.textContent = "";
 						}
 						new Notice("Time Format Reset");
 					})
@@ -438,7 +442,7 @@ class ClockSettingTab extends PluginSettingTab {
 							.getLeavesOfType("my-clock-view")
 							.find((leaf) => leaf.view instanceof ClockView);
 						if (clockView) {
-							(clockView.view as ClockView).displayTime(); // Update the clock immediately
+							(clockView.view as ClockView).displayTime();
 						}
 
 						// Show or hide the Date Format setting based on the toggle value
@@ -446,7 +450,8 @@ class ClockSettingTab extends PluginSettingTab {
 							? ""
 							: "none";
 
-						// Show or hide the Show Week and Quarter setting and its corresponding settings based on the toggle value
+						// Show or hide the Show Week and Quarter setting and its
+						// corresponding settings based on the toggle value
 						showWeekAndQuarterSetting.settingEl.style.display =
 							value ? "" : "none";
 						weekStartSetting.settingEl.style.display = value
@@ -483,9 +488,9 @@ class ClockSettingTab extends PluginSettingTab {
 						this.plugin.settings.dateFormat = value;
 						this.plugin.saveSettings();
 						this.plugin.view.displayTime();
-						hint.textContent = ""; // Remove the hint
+						hint.textContent = "";
 					} else {
-						hint.textContent = "Enter a format"; // Show the hint
+						hint.textContent = "Enter a format";
 					}
 				});
 			})
@@ -507,7 +512,7 @@ class ClockSettingTab extends PluginSettingTab {
 								this.plugin.settings.dateFormat;
 						}
 						if (hint instanceof HTMLElement) {
-							hint.textContent = ""; // Remove the hint
+							hint.textContent = "";
 						}
 						new Notice("Date Format Reset");
 					})
@@ -535,7 +540,8 @@ class ClockSettingTab extends PluginSettingTab {
 							(clockView.view as ClockView).displayTime();
 						}
 
-						// Hide or show the Week Starts On and Year Starts On settings based on the toggle value
+						// Hide or show the Week Starts On and Year Starts On
+						// settings based on the toggle value
 						weekStartSetting.settingEl.style.display = value
 							? ""
 							: "none";
@@ -582,7 +588,9 @@ class ClockSettingTab extends PluginSettingTab {
 		// Year Starts On Setting
 		const yearStartSetting = new Setting(containerEl)
 			.setName("Year Starts On")
-			.setDesc("Select the start of your fiscal year. Select January for default.")
+			.setDesc(
+				"Select the start of your fiscal year. Select January for default."
+			)
 			.addDropdown((dropdown) => {
 				const monthOptions: Record<string, string> = {
 					"1": "January",
@@ -640,10 +648,12 @@ class ClockSettingTab extends PluginSettingTab {
 							.getLeavesOfType("my-clock-view")
 							.find((leaf) => leaf.view instanceof ClockView);
 						if (clockView) {
-							(clockView.view as ClockView).displayTime(); // Update the clock immediately
+							// Update the clock immediately
+							(clockView.view as ClockView).displayTime();
 						}
 
-						// Show or hide the Timezone Format and Timezone Pairs settings based on the toggle value
+						// Show or hide the Timezone Format and Timezone Pairs
+						// settings based on the toggle value
 						timezoneFormatSetting.settingEl.style.display = value
 							? ""
 							: "none";
@@ -659,7 +669,7 @@ class ClockSettingTab extends PluginSettingTab {
 		// Timezone Format Setting
 		const timezoneFormatSetting = new Setting(containerEl)
 			.setName("Timezone Format")
-            .setDesc("Default Luxon format is HH:mm EEE")
+			.setDesc("Default Luxon format is HH:mm EEE")
 			.addText((text) => {
 				const textField = text
 					.setPlaceholder("Enter the timezone format")
@@ -675,9 +685,9 @@ class ClockSettingTab extends PluginSettingTab {
 						this.plugin.settings.timezoneFormat = value;
 						this.plugin.saveSettings();
 						this.plugin.view.displayTime();
-						hint.textContent = ""; // Remove the hint
+						hint.textContent = "";
 					} else {
-						hint.textContent = "Enter a format"; // Show the hint
+						hint.textContent = "Enter a format";
 					}
 				});
 			})
@@ -703,7 +713,7 @@ class ClockSettingTab extends PluginSettingTab {
 								this.plugin.settings.timezoneFormat;
 						}
 						if (hint instanceof HTMLElement) {
-							hint.textContent = ""; // Remove the hint
+							hint.textContent = "";
 						}
 						new Notice("Timezone Format Reset");
 					})
@@ -714,29 +724,24 @@ class ClockSettingTab extends PluginSettingTab {
 		// Timezone Pairs Setting
 		const timezonePairsSetting = new Setting(containerEl)
 			.setName("Timezone settings")
-			// .setDesc(
-			// 	"Enter the timezones you would like to display. A maximum of 5 are allowed."
-			// );
-
-            .setDesc(
+			.setDesc(
 				createFragment((fragment) => {
 					fragment.append(
 						"Enter the timezones you would like to display.",
-                        fragment.createEl("br"),
-                        fragment.createEl("br"),
-                        "Example: enter EST for name and -4 for offset.",
-                        fragment.createEl("br"),
+						fragment.createEl("br"),
+						fragment.createEl("br"),
+						"Example: enter EST for name and -4 for offset.",
+						fragment.createEl("br"),
 						fragment.createEl("a", {
 							text: "Timzone offset Reference",
 							href: "https://www.timeanddate.com/time/map/",
 						}),
-                        fragment.createEl("br"),
-                        fragment.createEl("br"),
-                        " A maximum of 5 timezones are allowed.",
 						fragment.createEl("br"),
-                        fragment.createEl("br"),
-						"Timezone Name and Offset pairs are not validated.",
-
+						fragment.createEl("br"),
+						" A maximum of 5 timezones are allowed.",
+						fragment.createEl("br"),
+						fragment.createEl("br"),
+						"Timezone Name and Offset pairs are not validated."
 					);
 				})
 			);
@@ -751,28 +756,28 @@ class ClockSettingTab extends PluginSettingTab {
 			const row = timezoneTable.createEl("tr");
 
 			const nameCell = row.createEl("td");
-            const nameInput = nameCell.createEl("input", {
-                type: "text",
-                value: entry.name,
-            });
-            nameInput.classList.add("custom-input-width");
+			const nameInput = nameCell.createEl("input", {
+				type: "text",
+				value: entry.name,
+			});
+			nameInput.classList.add("custom-input-width");
 
 			const hint = createHintElement();
 
-            function handleInput() {
-                const newName = nameInput.value.trim();
-                if (newName !== "") {
-                    entry.name = newName;
-                    this.plugin.saveSettings();
-                    this.plugin.view.displayTime();
-                    hint.textContent = ""; 
-                } else {
-                    hint.textContent = "Invalid format"; 
-                }
-            }
+			function handleInput() {
+				const newName = nameInput.value.trim();
+				if (newName !== "") {
+					entry.name = newName;
+					this.plugin.saveSettings();
+					this.plugin.view.displayTime();
+					hint.textContent = "";
+				} else {
+					hint.textContent = "Invalid format";
+				}
+			}
 
-            nameInput.addEventListener("input", handleInput);
-            nameInput.addEventListener("focus", handleInput);
+			nameInput.addEventListener("input", handleInput);
+			nameInput.addEventListener("focus", handleInput);
 
 			const offsetCell = row.createEl("td");
 			const offsetInput = offsetCell.createEl("input", {
@@ -780,23 +785,23 @@ class ClockSettingTab extends PluginSettingTab {
 				value: entry.offset,
 			});
 
-            offsetInput.classList.add("custom-input-width");
+			offsetInput.classList.add("custom-input-width");
 
-            const handleOffsetChange = () => {
-                const newOffset = offsetInput.value.trim();
-                if (this.isValidTimeZoneOffset(newOffset)) {
-                    entry.offset = newOffset;
-                    this.plugin.saveSettings();
-                    this.plugin.view.displayTime();
-                    hint.textContent = ""; 
-                } else {
-                    hint.textContent = "Invalid format"; 
-                }
-            };
-            
-            offsetInput.addEventListener("input", handleOffsetChange);
-            offsetInput.addEventListener("focus", handleOffsetChange);
-            
+			const handleOffsetChange = () => {
+				const newOffset = offsetInput.value.trim();
+				if (this.isValidTimeZoneOffset(newOffset)) {
+					entry.offset = newOffset;
+					this.plugin.saveSettings();
+					this.plugin.view.displayTime();
+					hint.textContent = "";
+				} else {
+					hint.textContent = "Invalid format";
+				}
+			};
+
+			offsetInput.addEventListener("input", handleOffsetChange);
+			offsetInput.addEventListener("focus", handleOffsetChange);
+
 			offsetCell.appendChild(hint);
 
 			const buttonsCell = row.createEl("td");
