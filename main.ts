@@ -1,18 +1,12 @@
 import { DateTime } from "luxon";
 import {
-	addIcon,
 	App,
 	ItemView,
-	Menu,
 	Plugin,
 	PluginSettingTab,
 	Setting,
-	TAbstractFile,
-	TFile,
 	WorkspaceLeaf,
 	Notice,
-	ExtraButtonComponent,
-	TextComponent,
 } from "obsidian";
 
 // Define the constant for the ClockView type
@@ -126,11 +120,11 @@ class ClockView extends ItemView {
 			const fiscalYear = this.calculateYear();
 
 			if (this.plugin.settings.showWeekAndQuarter) {
-				const quarterDiv = this.weekQuarterContainer.createDiv({
+				this.weekQuarterContainer.createDiv({
 					cls: "quarter",
 					text: `FY${fiscalYear}Q${currentQuarter}`,
 				});
-				const weekDiv = this.weekQuarterContainer.createDiv({
+				this.weekQuarterContainer.createDiv({
 					cls: "week",
 					text: `W${currentWeek}`,
 				});
@@ -203,9 +197,9 @@ class ClockView extends ItemView {
 		// Adjust for 0 based reference - we are saving the actual month number
 		// In the settings so -1 is the adjustment
 		const fiscalYearStart = this.plugin.settings.fiscalYearStart - 1;
-		let today = new Date();
-		let month = today.getMonth();
-		let monthIndex = (month - fiscalYearStart + 12) % 12;
+		const today = new Date();
+		const month = today.getMonth();
+		const monthIndex = (month - fiscalYearStart + 12) % 12;
 		return ~~(monthIndex / 3) + 1;
 	}
 
@@ -213,10 +207,10 @@ class ClockView extends ItemView {
 		// Adjust for 0 based reference - we are saving the actual month number
 		// In the settings so -1 is the adjustment
 		const fiscalYearStart = this.plugin.settings.fiscalYearStart - 1;
-		let today = new Date();
+		const today = new Date();
 		let year = today.getFullYear();
-		let month = today.getMonth();
-		let yearOffset =
+		const month = today.getMonth();
+		const yearOffset =
 			Math.floor((month - (fiscalYearStart % 12 || 12)) / 12) + 1;
 		year = yearOffset + year;
 		// Return only the last two digits of the year
@@ -361,10 +355,45 @@ class ClockSettingTab extends PluginSettingTab {
 	public display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
+		const div = containerEl.createEl("div", {
+			cls: "recent-files-donation",
+		});
+
+		const donateText = document.createElement("div");
+		donateText.className = "donate-text";
+
+		const donateDescription = document.createElement("p");
+		donateDescription.textContent =
+			"If you find this plugin valuable and would like to support its development, please consider using the button below. Your contribution is greatly appreciated!";
+
+		donateText.appendChild(donateDescription);
+
+		const donateLink = document.createElement("a");
+		donateLink.href = "https://www.buymeacoffee.com/mstam30561";
+		donateLink.target = "_blank";
+
+		function rotateColorRandomly(element: HTMLElement) {
+			const rotationDegrees = Math.floor(Math.random() * 8 + 1) * 45; // Randomly select a rotation value in increments of 45 degrees
+			element.style.filter = `hue-rotate(${rotationDegrees}deg)`;
+		}
+
+		const donateImage = document.createElement("img");
+		donateImage.src =
+			"https://cdn.buymeacoffee.com/buttons/v2/default-blue.png";
+		donateImage.alt = "Buy Me A Coffee";
+		rotateColorRandomly(donateImage);
+		donateImage.style.height = "60px";
+		donateImage.style.width = "217px";
+
+		donateLink.appendChild(donateImage);
+		donateText.appendChild(donateLink);
+
+		div.appendChild(donateText);
+
 		containerEl.createEl("h1", { text: "Clock" });
 
 		// Add a link to the Luxon reference
-		let h2El = containerEl.createEl("p", {
+		const h2El = containerEl.createEl("p", {
 			text: "Use the Luxon format for all time and date settings: ",
 		});
 		h2El.createEl("a", {

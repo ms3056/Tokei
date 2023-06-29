@@ -1,16 +1,17 @@
 .theme-dark {
-    --background: #1C2732; /* Dark Gray-Blue */
-    --main-text: #aabed8; /* Light Gray */
-    --secondary-text: #4e5e72; /* Slightly Lighter Dark Gray-Blue */
-    --highlight: #427BBF; /* Dark Blue */
-    --border: #3A4E58; /* Medium Dark Gray-Blue */
+	--background: #1c2732; 
+	--main-text: #aabed8; 
+	--secondary-text: #7b96b3; 
+	--highlight: #427bbf; 
+	--border: #3a4e58; 
 }
+
 .theme-light {
-    --background: #E5E9F2; /* Light Gray */
-    --main-text: #497FA0; /* Dark Gray-Blue */
-    --secondary-text: #BAC8D1; /* Medium Light Gray */
-    --highlight: #6A85A3; /* Medium Gray-Blue */
-    --border: #88A0B9; /* Light Gray-Blue */
+	--background: #e5e9f2;
+	--main-text: #497fa0; 
+	--secondary-text: #9fabb3; 
+	--highlight: #6a85a3; 
+	--border: #88a0b9; 
 }
 
 /* to help with validation */
@@ -30,7 +31,6 @@
     flex-direction: column;
     align-items: center;
     font-family: 'Roboto', sans-serif;
-    /* border: 2px solid rgb(99, 178, 34); */
   }
   
   /* This is the time and date container */
@@ -39,7 +39,6 @@
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    /* border: 2px dashed rgb(100, 18, 45); */
   }
   
   .time {
@@ -48,7 +47,7 @@
     font-size: 4em;
     font-weight: 900;
     line-height: 1;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    text-shadow: 2px 2px 4px var(--secondary-text);
     color: var(--main-text);
   }
   
@@ -64,7 +63,6 @@
     margin: 0;
     font-size: 2em;
     color: var(--secondary-text);
-    /* line-break: 1; */
   }
   
   /* Week and Quarter Container */
@@ -78,7 +76,7 @@
 
   .quarter {
     color: var(--main-text);
-    margin-bottom: -5px;
+    margin-bottom: -2px;
   }
 
   .week {
@@ -96,24 +94,6 @@
     padding: 2px;
     min-width: 300px;
 }
-
-/* .timezone-pair {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    border: 2px solid var(--border); 
-    max-width: 25%;
-    background-color: var(--background); 
-    border-radius: 10%;
-    backdrop-filter: blur(10px);
-} */
-
-/* .timezone-name {
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-    color: var(--highlight); 
-    font-weight: bold;
-} */
 
 .timezone-pair {
   display: flex;
@@ -135,7 +115,7 @@
     overflow-wrap: anywhere;
     text-align: center;
     padding: 2px 2px 2px 2px;
-    color: var(--main-text); /* Lighter gray for the time text */
+    color: var(--main-text); 
     font-size: 0.8em;
 }
 
@@ -144,15 +124,15 @@
 /* Styles for the settings dialog */
 
 .custom-input-width {
-  width: 100px; 
+  width: 7em; 
 }
 .addButtonClass,
 .deleteButtonClass {
     width: 2em;
     height: 2em;
-    background-color: #2d2d2d;
+    /* background-color: #2d2d2d; */
     color: #ffffff;
-    border: 1px solid rgb(49, 0, 49);
+    border: 1px solid var(--border);
     border-radius: 4px;
     cursor: pointer;
     display: flex;
@@ -162,7 +142,9 @@
 
 .addButtonClass:hover,
 .deleteButtonClass:hover {
-    background-color: rgb(94, 0, 94);
+    background-color: var(--background);
+    border: 2px solid var(--border);
+
 }
 
 .twoButtonsClass {
@@ -170,5 +152,19 @@
     justify-content: flex-end;
     gap: 2px;
 }
+
+/* Donation Styling */
+.recent-files-donation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.donate-text {
+  text-align: center;
+  margin-bottom: 5px; 
+}
+
 
 
