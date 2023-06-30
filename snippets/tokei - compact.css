@@ -1,0 +1,9 @@
+/* this snippet will apply an more compact style */
+.timezone-pair {
+    flex-direction: row;
+} 
+
+ .timezone-name {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+} 
