@@ -9,12 +9,12 @@
       "offset": "-4"
     },
     {
-      "name": "IST",
-      "offset": "+5.5"
-    },
-    {
       "name": "HKT",
       "offset": "+8"
+    },
+    {
+      "name": "IST",
+      "offset": "+5.5"
     }
   ],
   "timezoneFormat": "HH:mm EEE",

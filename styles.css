@@ -7,7 +7,7 @@
 }
 
 .theme-light {
-	--background: #e5e9f2;
+	--background: #d7dff0;
 	--main-text: #497fa0; 
 	--secondary-text: #9fabb3; 
 	--highlight: #6a85a3; 
@@ -124,33 +124,40 @@
 /* Styles for the settings dialog */
 
 .custom-input-width {
-  width: 7em; 
+  width: 7em;
+  box-sizing: border-box;
+  line-height: 1em;
 }
+
 .addButtonClass,
 .deleteButtonClass {
-    width: 2em;
-    height: 2em;
-    /* background-color: #2d2d2d; */
-    color: #ffffff;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  width: 1.8em;
+  line-height: 1em;
+  color: var(--main-text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.4em;
+  font-weight: bold;
+  padding: 0;
+  margin: 0;
 }
 
 .addButtonClass:hover,
 .deleteButtonClass:hover {
-    background-color: var(--background);
-    border: 2px solid var(--border);
-
+  background-color: var(--highlight);
+  border: 2px solid var(--main-text);
+  color: var(--background);
 }
 
 .twoButtonsClass {
-    display: flex;
-    justify-content: flex-end;
-    gap: 2px;
+  display: flex;
+  justify-content: flex-start;
+  gap: 0.3em;
+  
 }
 
 /* Donation Styling */

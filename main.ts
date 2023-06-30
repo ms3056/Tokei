@@ -382,8 +382,8 @@ class ClockSettingTab extends PluginSettingTab {
 			"https://cdn.buymeacoffee.com/buttons/v2/default-blue.png";
 		donateImage.alt = "Buy Me A Coffee";
 		rotateColorRandomly(donateImage);
-		donateImage.style.height = "48px";
-		donateImage.style.width = "173.6px";
+		donateImage.style.height = "60px";
+		donateImage.style.width = "217px";
 
 		donateLink.appendChild(donateImage);
 		donateText.appendChild(donateLink);
@@ -847,36 +847,47 @@ class ClockSettingTab extends PluginSettingTab {
 			}
 
 			if (index === this.plugin.settings.timeZonePairs.length - 1) {
-				const addButton = buttonsCell.createEl("button", { text: "+" });
-				addButton.classList.add("addButtonClass");
-				// Add event listener for the "Add" button
-				addButton.addEventListener("click", async () => {
-					if (this.plugin.settings.timeZonePairs.length < 5) {
-						this.plugin.settings.timeZonePairs.push({
-							name: "",
-							offset: "",
-						});
-						await this.plugin.saveSettings();
-						this.display();
+				if (this.plugin.settings.timeZonePairs.length < 5) {
+					const addButton = buttonsCell.createEl("button", {
+						text: "+",
+					});
+					addButton.classList.add("addButtonClass");
+					// Add event listener for the "Add" button
+					addButton.addEventListener("click", async () => {
+						if (this.plugin.settings.timeZonePairs.length < 5) {
+							this.plugin.settings.timeZonePairs.push({
+								name: "",
+								offset: "",
+							});
+							await this.plugin.saveSettings();
+							this.display();
 
-						// Get the index of the newly added cell
-						const newIndex =
-							this.plugin.settings.timeZonePairs.length - 1;
+							// Get the index of the newly added cell
+							const newIndex =
+								this.plugin.settings.timeZonePairs.length - 1;
 
-						// Get the corresponding input elements
-						const newNameInput = timezoneTable.querySelectorAll(
-							'input[name="timezone-name"]'
-						)[newIndex] as HTMLInputElement;
-						const newOffsetInput = timezoneTable.querySelectorAll(
-							'input[name="timezone-offset"]'
-						)[newIndex] as HTMLInputElement;
+							// Get the corresponding input elements
+							const newNameInput = timezoneTable.querySelectorAll(
+								'input[name="timezone-name"]'
+							)[newIndex] as HTMLInputElement;
+							const newOffsetInput =
+								timezoneTable.querySelectorAll(
+									'input[name="timezone-offset"]'
+								)[newIndex] as HTMLInputElement;
 
-						// Validate and display hint for the newly added cell
-						validateAndDisplayHint(newNameInput, newOffsetInput);
-					} else {
-						new Notice("Maximum timezone entries added.");
-					}
-				});
+							// Validate and display hint for the newly added cell
+							validateAndDisplayHint(
+								newNameInput,
+								newOffsetInput
+							);
+						}
+					});
+				}
+			} else if (
+				index === this.plugin.settings.timeZonePairs.length - 2 &&
+				this.plugin.settings.timeZonePairs.length === 5
+			) {
+				new Notice("Maximum timezone entries added.");
 			}
 
 			if (
