@@ -1,7 +1,7 @@
 {
-    "id": "clock",
-    "name": "Clock",
-    "version": "0.3.1",
+    "id": "tokei",
+    "name": "Tokei",
+    "version": "0.1.0",
     "minAppVersion": "0.16.3",
     "description": "A simple clock.",
     "author": "HiroMike",

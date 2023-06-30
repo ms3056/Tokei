@@ -54,7 +54,7 @@ class ClockView extends ItemView {
 
 	// Return the display text for the view
 	public getDisplayText(): string {
-		return "Clock";
+		return "Tokei";
 	}
 
 	// Return the icon for the view
@@ -382,15 +382,15 @@ class ClockSettingTab extends PluginSettingTab {
 			"https://cdn.buymeacoffee.com/buttons/v2/default-blue.png";
 		donateImage.alt = "Buy Me A Coffee";
 		rotateColorRandomly(donateImage);
-		donateImage.style.height = "60px";
-		donateImage.style.width = "217px";
+		donateImage.style.height = "48px";
+		donateImage.style.width = "173.6px";
 
 		donateLink.appendChild(donateImage);
 		donateText.appendChild(donateLink);
 
 		div.appendChild(donateText);
 
-		containerEl.createEl("h1", { text: "Clock" });
+		containerEl.createEl("h1", { text: "Tokei" });
 
 		// Add a link to the Luxon reference
 		const h2El = containerEl.createEl("p", {

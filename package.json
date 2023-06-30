@@ -1,7 +1,7 @@
 {
-	"name": "Clock for Obsidian",
-	"version": "1.0.0",
-	"description": "This is a weather plugin for Obsidian (https://obsidian.md)",
+	"name": "Tokei",
+	"version": "0.1.0",
+	"description": "A simple clock.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
