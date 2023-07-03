@@ -1,42 +1,50 @@
-# Clock
+# Tokei (Japanese for "clock")
 
-This is a clock for Obsidian (https://obsidian.md).
-
-![2023-06-27_10h32_10](https://github.com/ms3056/clock/assets/23712700/dc5962d5-0d4d-45c8-9426-0bb426b1c6ee)
-
-## The Settings dialog in action
-
-![2023-06-27_10h30_52](https://github.com/ms3056/clock/assets/23712700/f32971fd-ce37-4244-bf39-cbaf195fd1ca)
-
-## Manually installing the plugin
-
--   Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/Clock/`.
--   Alternatively copy over the `clock - compact.css` to your snippet directory
-
-## Usage
-
--   When you first enable the plugin you won't see anything. Control/Command+p and type clock and select the **CLock Plugin: Open Clock** command
--   Drag the icon to wherever you want it
--   Change the settings as you see fit
--   Take a look at the `styles.css` to tinker with the layout and the color schemes.
--   When entering timezones click enter after each name or offset entry
--   Offsets are in UTC format - so 0 or +1 or -5 or +5.5 (this is equivalent to +5:30)
+Tokei is a clock plugin for [Obsidian](https://obsidian.md).
 
 ## Alternative Style
 
--   Just about every element has a CSS class. Look at style.css to get a look at the classes.
--   I have included a snippet to change the styling to be more compact
+- An alternative style is included as a snippet. You can experiment with your own snippets using the provided CSS class for all visible items.
 
-![2023-06-27_10h32_26](https://github.com/ms3056/clock/assets/23712700/bd99d033-0622-40cb-84c6-17abc7b7039d)
+![Styling](./images/styling.jpg)
 
-## Coffee
+# Manual Installation
 
-<a href="https://www.buymeacoffee.com/mstam30561" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
+To manually install the plugin, follow these steps:
 
-## Help and Support
+1. Copy `main.js`, `styles.css`, and `manifest.json` to your Obsidian vault's plugin directory: `VaultFolder/.obsidian/plugins/Tokei/`.
+2. Optional: Copy `Tokei - compact.css` to your snippet directory.
 
-I have received quite a bit of help from members of the Discord community. Thank you very much!
+# Usage
+
+1. After enabling the plugin, you won't see anything initially. To open Tokei, use the "Control/Command + P" shortcut and type "Tokei" and then select the **Tokei: Open** command.
+2. Drag the Tokei icon to your preferred location.
+3. Customize the settings as needed.
+4. If you want to modify the layout and color schemes, take a look at `styles.css` and create your own snippet to change the colors and layout.
+5. When adding timezones, press Enter after each name or offset entry.
+6. Offsets are in UTC format, such as 0, +1, -5, or +5.5 (equivalent to +5:30).
+
+Watch the video below for a visual guide:
+
+<video src="./images/settings.mp4" controls>
+  <a href="./images/settings.mp4">Watch the video</a>
+</video>
+
+# Buy Me A Coffee
+
+If you find Tokei useful, consider supporting its development by buying me a coffee:
+
+<p align="center">
+  <a href="https://www.buymeacoffee.com/mstam30561" target="_blank">
+    <img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174">
+  </a>
+</p>
+
+# Help and Support
+
+I would like to express my gratitude to the members of the Discord community who have provided valuable help and support. Thank you very much!
 
 ## API Documentation
 
-See https://docs.obsidian.md/Home
+For more information about Obsidian's API, refer to the [Obsidian API Documentation](https://docs.obsidian.md/Home).
+
