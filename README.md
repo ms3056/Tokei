@@ -26,6 +26,8 @@ To manually install the plugin, follow these steps:
 
 Watch the video below for a visual guide:
 
+![Styling](./images/settings.mp4)
+
 <video src="./images/settings.mp4" controls>
   <a href="./images/settings.mp4">Watch the video</a>
 </video>
