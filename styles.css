@@ -173,5 +173,16 @@
   margin-bottom: 5px; 
 }
 
+.donate-img {
+  width: 163px;
+  height: 45px !important;
+  border-radius: 10px;
+}
+
+.donate-img:hover {
+  border: 2px solid red;
+  border-radius: 10px;
+}
+
 
 

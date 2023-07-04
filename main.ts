@@ -10,12 +10,12 @@ import {
 } from "obsidian";
 
 // Define the constant for the ClockView type
-const ClockViewType = "my-clock-view";
+const ClockViewType = "tokei";
 
 // Define the ClockView class that extends ItemView
 class ClockView extends ItemView {
 	private readonly plugin: ClockPlugin;
-	private updateInterval: NodeJS.Timeout | null = null;
+	private updateInterval: number | null = null;
 	// Container elements for time, date, and timezone
 	private timeDateContainer: HTMLElement;
 	private timezoneContainer: HTMLElement;
@@ -35,13 +35,13 @@ class ClockView extends ItemView {
 	// Called when the view is opened
 	public async onOpen(): Promise<void> {
 		this.displayTime();
-		this.updateInterval = setInterval(this.displayTime.bind(this), 1000);
+		this.updateInterval = window.setInterval(this.displayTime.bind(this), 1000);
 	}
 
 	// Called when the view is closed
 	public onClose(): Promise<void> {
-		if (this.updateInterval) {
-			clearInterval(this.updateInterval);
+		if (this.updateInterval !== null) {
+			window.clearInterval(this.updateInterval);
 			this.updateInterval = null;
 		}
 		return super.onClose();
@@ -269,43 +269,30 @@ export default class ClockPlugin extends Plugin {
 			DEFAULT_SETTINGS,
 			await this.loadData()
 		);
-
+	
 		this.registerView(
 			ClockViewType,
 			(leaf) => (this.view = new ClockView(leaf, this))
 		);
-
+	
 		this.addCommand({
 			id: "open",
 			name: "open",
 			callback: this.onShow.bind(this),
 		});
-
-		let isViewInitialized = false;
-
-		const checkLayoutInterval = setInterval(async () => {
-			if (this.app.workspace.layoutReady && !isViewInitialized) {
-				await this.initView();
-				isViewInitialized = true;
-				clearInterval(checkLayoutInterval);
-			}
-		}, 1000);
-
+	
 		this.app.workspace.onLayoutReady(async () => {
-			if (!isViewInitialized) {
-				await this.initView();
-				isViewInitialized = true;
-				clearInterval(checkLayoutInterval);
-			}
+			await this.initView();
 		});
-
+	
 		this.addSettingTab(new ClockSettingTab(this.app, this));
 	}
+	
 
 	// Clear the update interval when the plugin is unloaded
 	public onunload(): void {
-		if (this.updateInterval) {
-			clearInterval(this.updateInterval);
+		if (this.updateInterval !== null) {
+			window.clearInterval(this.updateInterval);
 			this.updateInterval = null;
 		}
 	}
@@ -381,10 +368,9 @@ class ClockSettingTab extends PluginSettingTab {
 		donateImage.src =
 			"https://cdn.buymeacoffee.com/buttons/v2/default-blue.png";
 		donateImage.alt = "Buy Me A Coffee";
-		rotateColorRandomly(donateImage);
-		donateImage.style.height = "60px";
-		donateImage.style.width = "217px";
 
+		rotateColorRandomly(donateImage);
+		donateImage.classList.add('donate-img');
 		donateLink.appendChild(donateImage);
 		donateText.appendChild(donateLink);
 
@@ -468,7 +454,7 @@ class ClockSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 
 						const clockView = this.app.workspace
-							.getLeavesOfType("my-clock-view")
+							.getLeavesOfType("tokei")
 							.find((leaf) => leaf.view instanceof ClockView);
 						if (clockView) {
 							(clockView.view as ClockView).displayTime();
@@ -674,7 +660,7 @@ class ClockSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 
 						const clockView = this.app.workspace
-							.getLeavesOfType("my-clock-view")
+							.getLeavesOfType("tokei")
 							.find((leaf) => leaf.view instanceof ClockView);
 						if (clockView) {
 							// Update the clock immediately
