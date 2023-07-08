@@ -35,7 +35,10 @@ class ClockView extends ItemView {
 	// Called when the view is opened
 	public async onOpen(): Promise<void> {
 		this.displayTime();
-		this.updateInterval = window.setInterval(this.displayTime.bind(this), 1000);
+		this.updateInterval = window.setInterval(
+			this.displayTime.bind(this),
+			1000
+		);
 	}
 
 	// Called when the view is closed
@@ -269,25 +272,24 @@ export default class ClockPlugin extends Plugin {
 			DEFAULT_SETTINGS,
 			await this.loadData()
 		);
-	
+
 		this.registerView(
 			ClockViewType,
 			(leaf) => (this.view = new ClockView(leaf, this))
 		);
-	
+
 		this.addCommand({
 			id: "open",
 			name: "open",
 			callback: this.onShow.bind(this),
 		});
-	
+
 		this.app.workspace.onLayoutReady(async () => {
 			await this.initView();
 		});
-	
+
 		this.addSettingTab(new ClockSettingTab(this.app, this));
 	}
-	
 
 	// Clear the update interval when the plugin is unloaded
 	public onunload(): void {
@@ -370,7 +372,7 @@ class ClockSettingTab extends PluginSettingTab {
 		donateImage.alt = "Buy Me A Coffee";
 
 		rotateColorRandomly(donateImage);
-		donateImage.classList.add('donate-img');
+		donateImage.classList.add("donate-img");
 		donateLink.appendChild(donateImage);
 		donateText.appendChild(donateLink);
 
@@ -439,11 +441,12 @@ class ClockSettingTab extends PluginSettingTab {
 					})
 			);
 
-		timeFormatInput.settingEl.style.borderTop = "none";
-		timeFormatInput.settingEl.style.borderBottom = "none";
+		// Style the settings - see CSS
+		timeFormatInput.settingEl.classList.add("time-format-settings");
 
 		// Show Date Setting
 		const showDateSetting = new Setting(containerEl)
+
 			.setName("Show date")
 			.setDesc("Enable to show the date.")
 			.addToggle((toggle) => {
@@ -481,8 +484,8 @@ class ClockSettingTab extends PluginSettingTab {
 					});
 			});
 
-		showDateSetting.settingEl.style.borderBottom = "none";
-		showDateSetting.settingEl.style.fontWeight = "bold";
+		// Style the settings see CSS
+		showDateSetting.settingEl.classList.add("show-date-settings");
 
 		// Date Format Setting
 		const dateFormatSetting = new Setting(containerEl)
@@ -532,9 +535,9 @@ class ClockSettingTab extends PluginSettingTab {
 						new Notice("Date Format Reset");
 					})
 			);
-		dateFormatSetting.settingEl.style.borderTop = "none";
-		dateFormatSetting.settingEl.style.borderBottom = "none";
-		dateFormatSetting.settingEl.style.marginLeft = "20px";
+
+		// Style the settings - see the CSS
+		dateFormatSetting.settingEl.classList.add("date-format-settings");
 
 		// Week and Quarter settings
 		const showWeekAndQuarterSetting = new Setting(containerEl)
@@ -568,10 +571,10 @@ class ClockSettingTab extends PluginSettingTab {
 							: "none";
 					});
 			});
-
-		showWeekAndQuarterSetting.settingEl.style.marginLeft = "20px";
-		showWeekAndQuarterSetting.settingEl.style.borderBottom = "none";
-		showWeekAndQuarterSetting.settingEl.style.fontWeight = "bold";
+		// Style the settings - see CSS
+		showWeekAndQuarterSetting.settingEl.classList.add(
+			"week-quarter-settings"
+		);
 
 		// Week Starts On Setting
 		const weekStartSetting = new Setting(containerEl)
@@ -596,9 +599,7 @@ class ClockSettingTab extends PluginSettingTab {
 						}
 					});
 			});
-
-		weekStartSetting.settingEl.style.marginLeft = "40px";
-		weekStartSetting.settingEl.style.borderTop = "none";
+		weekStartSetting.settingEl.classList.add("week-start-settings");
 
 		// Year Starts On Setting
 		const yearStartSetting = new Setting(containerEl)
@@ -637,8 +638,8 @@ class ClockSettingTab extends PluginSettingTab {
 					});
 			});
 
-		yearStartSetting.settingEl.style.marginLeft = "40px";
-		yearStartSetting.settingEl.style.borderTop = "none";
+		// Style the settings - see CSS
+		yearStartSetting.settingEl.classList.add("year-start-settings");
 
 		// Week and Quarter Container
 		const weekQuarterContainer = containerEl.createDiv();
@@ -646,7 +647,6 @@ class ClockSettingTab extends PluginSettingTab {
 			.showWeekAndQuarter
 			? ""
 			: "none";
-		// Remove horizontal line
 
 		// Show Timezones Setting
 		const showTimezonesSetting = new Setting(containerEl)
@@ -678,8 +678,8 @@ class ClockSettingTab extends PluginSettingTab {
 					});
 			});
 
-		showTimezonesSetting.settingEl.style.fontWeight = "bold";
-		showTimezonesSetting.settingEl.style.borderBottom = "none";
+		// Style the settings
+		showTimezonesSetting.settingEl.classList.add("show-timezones-settings");
 
 		// Timezone Format Setting
 		const timezoneFormatSetting = new Setting(containerEl)
@@ -733,8 +733,10 @@ class ClockSettingTab extends PluginSettingTab {
 						new Notice("Timezone Format Reset");
 					})
 			);
-
-		timezoneFormatSetting.settingEl.style.borderTop = "none";
+		// Style Settings - see CSS
+		timezoneFormatSetting.settingEl.classList.add(
+			"timezone-format-settings"
+		);
 
 		// Timezone Pairs Setting
 		const timezonePairsSetting = new Setting(containerEl)
@@ -760,7 +762,7 @@ class ClockSettingTab extends PluginSettingTab {
 					);
 				})
 			);
-
+		timezonePairsSetting.settingEl.classList.add("timezone-pairs-settings");
 		const timezoneTable = timezonePairsSetting.settingEl.createEl("table");
 		const timezoneTableHeader = timezoneTable.createEl("tr");
 		timezoneTableHeader.createEl("th", { text: "Name" });
@@ -908,9 +910,6 @@ class ClockSettingTab extends PluginSettingTab {
 				offsetInput.removeAttribute("title");
 			}
 		};
-
-		timezonePairsSetting.settingEl.style.borderTop = "none";
-		timezonePairsSetting.settingEl.style.borderBottom = "none";
 
 		// Show or hide settings based on the initial values of toggle switches
 		dateFormatSetting.settingEl.style.display = this.plugin.settings

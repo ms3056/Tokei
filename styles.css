@@ -1,28 +1,79 @@
+/* @settings
+
+name: Tokei
+id: tokei
+settings:
+    -
+        id: tokei-background
+        title: Background Color
+        description: Set the color of the timezone block background
+        type: variable-themed-color
+        opacity: true
+        format: hex
+        default-light: '#d7dff0'
+        default-dark: '#1c2732'
+
+    -
+        id: tokei-main-text
+        title: Main Text Color
+        description: Set the color of the main text 
+        type: variable-themed-color
+        opacity: true
+        format: hex
+        default-dark: '#aabed8'
+        default-light: '#497fa0'
+    -
+        id: tokei-secondary-text
+        title: Secondary Text Color
+        description: Set the color of the secondary text 
+        type: variable-themed-color
+        opacity: true
+        format: hex
+        default-dark: '#7b96b3'
+        default-light: '#9fabb3'
+
+    -
+        id: tokei-highlight
+        title: Highlight Color
+        description: Set the highlight color
+        type: variable-themed-color
+        opacity: true
+        format: hex
+        default-dark: '#6a85a3'
+        default-light: '#6a85a3'
+
+    -
+        id: tokei-border
+        title: Border Color
+        description: Set the border color 
+        type: variable-themed-color
+        opacity: true
+        format: hex
+        default-dark: '#3a4e58'
+        default-light: '#88a0b9'
+
+*/
+
 .theme-dark {
-	--background: #1c2732; 
-	--main-text: #aabed8; 
-	--secondary-text: #7b96b3; 
-	--highlight: #427bbf; 
-	--border: #3a4e58; 
+	--tokei-background: #1c2732; 
+	--tokei-main-text: #aabed8; 
+	--tokei-secondary-text: #7b96b3; 
+	--tokei-highlight: #427bbf; 
+	--tokei-border: #3a4e58; 
 }
 
 .theme-light {
-	--background: #d7dff0;
-	--main-text: #497fa0; 
-	--secondary-text: #9fabb3; 
-	--highlight: #6a85a3; 
-	--border: #88a0b9; 
-}
-
-/* to help with validation */
-.red-border {
-    border: 1px solid red !important;
+	--tokei-background: #d7dff0;
+	--tokei-main-text: #497fa0; 
+	--tokei-secondary-text: #9fabb3; 
+	--tokei-highlight: #6a85a3; 
+	--tokei-border: #88a0b9; 
 }
 
 .small-hint {
     font-family: sans-serif;
     font-size: 0.8em;
-    color: var(--color-accent);
+    color: var(--tokei-highlight);
 }
 
 /* This the the top level container */
@@ -30,7 +81,6 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    font-family: 'Roboto', sans-serif;
   }
   
   /* This is the time and date container */
@@ -47,8 +97,8 @@
     font-size: 4em;
     font-weight: 900;
     line-height: 1;
-    text-shadow: 2px 2px 4px var(--secondary-text);
-    color: var(--main-text);
+    text-shadow: 2px 2px 4px var(--tokei-secondary-text);
+    color: var(--tokei-main-text);
   }
   
   .date-container {
@@ -62,7 +112,7 @@
     padding: 0;
     margin: 0;
     font-size: 2em;
-    color: var(--secondary-text);
+    color: var(--tokei-secondary-text);
   }
   
   /* Week and Quarter Container */
@@ -75,12 +125,12 @@
   }
 
   .quarter {
-    color: var(--main-text);
+    color: var(--tokei-main-text);
     margin-bottom: -2px;
   }
 
   .week {
-    color: var(--main-text);
+    color: var(--tokei-main-text);
   }
 
 
@@ -99,15 +149,15 @@
   display: flex;
   flex-direction: column; 
   align-items: center;
-  border: 2px solid var(--border); 
+  border: 2px solid var(--tokei-border); 
   max-width: 25%;
-  background-color: var(--background); 
-  border-radius: 10%;
+  background-color: var(--tokei-background); 
+  border-radius: 5px;
   backdrop-filter: blur(10px);
 }
 
 .timezone-name {
-  color: var(--highlight); 
+  color: var(--tokei-highlight); 
   font-weight: bold;
 }
 
@@ -115,8 +165,8 @@
     overflow-wrap: anywhere;
     text-align: center;
     padding: 2px 2px 2px 2px;
-    color: var(--main-text); 
-    font-size: 0.8em;
+    color: var(--tokei-main-text); 
+    font-size: 1em;
 }
 
 
@@ -133,8 +183,8 @@
 .deleteButtonClass {
   width: 1.8em;
   line-height: 1em;
-  color: var(--main-text);
-  border: 1px solid var(--border);
+  color: var(--tokei-main-text);
+  border: 1px solid var(--tokei-border);
   border-radius: 4px;
   cursor: pointer;
   display: flex;
@@ -148,9 +198,9 @@
 
 .addButtonClass:hover,
 .deleteButtonClass:hover {
-  background-color: var(--highlight);
-  border: 2px solid var(--main-text);
-  color: var(--background);
+  background-color: var(--tokei-highlight);
+  border: 2px solid var(--tokei-main-text);
+  color: var(--tokei-background);
 }
 
 .twoButtonsClass {
@@ -175,7 +225,7 @@
 
 .donate-img {
   width: 163px;
-  height: 45px !important;
+  height: 45px;
   border-radius: 10px;
 }
 
@@ -184,5 +234,49 @@
   border-radius: 10px;
 }
 
+.time-format-settings {
+  border-top: none;
+  border-bottom: none;
+}
 
+.show-date-settings {
+  border-bottom: none;
+  font-weight: bold;
+}
+
+.date-format-settings {
+  border-top: none;
+  border-bottom: none;
+  margin-left: 20px;
+}
+
+.week-quarter-settings {
+  margin-left: 20px;
+  border-bottom: none;
+  font-weight: bold;
+}
+
+.week-start-settings {
+  border-top: none;
+  margin-left: 40px;
+}
+
+.year-start-settings {
+  border-top: none;
+  margin-left: 40px;
+}
+
+.show-timezones-settings {
+  font-weight: bold;
+  border-bottom: none;
+}
+
+.timezone-format-settings {
+  border-top: none;
+  margin-left: 20px;
+}
+
+.timezone-pairs-settings {
+  margin-left: 20px;
+}
 
