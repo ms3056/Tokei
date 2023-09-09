@@ -7,6 +7,7 @@ import {
 	Setting,
 	WorkspaceLeaf,
 	Notice,
+	debounce,
 } from "obsidian";
 
 // Define the constant for the ClockView type
@@ -15,7 +16,8 @@ const ClockViewType = "tokei";
 // Define the ClockView class that extends ItemView
 class ClockView extends ItemView {
 	private readonly plugin: ClockPlugin;
-	private updateInterval: number | null = null;
+	updateInterval: number = -1;
+
 	// Container elements for time, date, and timezone
 	private timeDateContainer: HTMLElement;
 	private timezoneContainer: HTMLElement;
@@ -43,10 +45,11 @@ class ClockView extends ItemView {
 
 	// Called when the view is closed
 	public onClose(): Promise<void> {
-		if (this.updateInterval !== null) {
+		if (this.updateInterval !== -1) {
 			window.clearInterval(this.updateInterval);
-			this.updateInterval = null;
+			this.updateInterval = -1; // Reset to default value
 		}
+
 		return super.onClose();
 	}
 
@@ -262,7 +265,7 @@ const DEFAULT_SETTINGS: ClockSettings = {
 export default class ClockPlugin extends Plugin {
 	view: ClockView;
 	settings: ClockSettings;
-	updateInterval: NodeJS.Timeout | null = null;
+	updateInterval: number = -1;
 
 	// Load plugin settings, register the ClockView, add the 'Open Clock'
 	// command, and set up layout readiness check
@@ -293,9 +296,9 @@ export default class ClockPlugin extends Plugin {
 
 	// Clear the update interval when the plugin is unloaded
 	public onunload(): void {
-		if (this.updateInterval !== null) {
+		if (this.updateInterval !== -1) {
 			window.clearInterval(this.updateInterval);
-			this.updateInterval = null;
+			this.updateInterval = -1;
 		}
 	}
 
@@ -314,10 +317,16 @@ export default class ClockPlugin extends Plugin {
 			await leaf.setViewState({ type: ClockViewType });
 			this.app.workspace.revealLeaf(leaf);
 			this.view.displayTime();
-			this.updateInterval = setInterval(
-				this.view.displayTime.bind(this.view),
-				1000
-			);
+
+			// Clear any existing interval
+			if (this.updateInterval !== -1) {
+				window.clearInterval(this.updateInterval);
+			}
+
+			// Set up an interval to call this.view.displayTime every second
+			this.updateInterval = window.setInterval(() => {
+				this.view.displayTime();
+			}, 1000);
 		}
 	}
 
@@ -344,41 +353,8 @@ class ClockSettingTab extends PluginSettingTab {
 	public display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
-		const div = containerEl.createEl("div", {
-			cls: "recent-files-donation",
-		});
 
-		const donateText = document.createElement("div");
-		donateText.className = "donate-text";
-
-		const donateDescription = document.createElement("p");
-		donateDescription.textContent =
-			"If you find this plugin valuable and would like to support its development, please consider using the button below. Your contribution is greatly appreciated!";
-
-		donateText.appendChild(donateDescription);
-
-		const donateLink = document.createElement("a");
-		donateLink.href = "https://www.buymeacoffee.com/mstam30561";
-		donateLink.target = "_blank";
-
-		function rotateColorRandomly(element: HTMLElement) {
-			const rotationDegrees = Math.floor(Math.random() * 8 + 1) * 45; // Randomly select a rotation value in increments of 45 degrees
-			element.style.filter = `hue-rotate(${rotationDegrees}deg)`;
-		}
-
-		const donateImage = document.createElement("img");
-		donateImage.src =
-			"https://cdn.buymeacoffee.com/buttons/v2/default-blue.png";
-		donateImage.alt = "Buy Me A Coffee";
-
-		rotateColorRandomly(donateImage);
-		donateImage.classList.add("donate-img");
-		donateLink.appendChild(donateImage);
-		donateText.appendChild(donateLink);
-
-		div.appendChild(donateText);
-
-		containerEl.createEl("h1", { text: "Tokei" });
+		containerEl.createEl("div", { text: "Tokei" });
 
 		// Add a link to the Luxon reference
 		const h2El = containerEl.createEl("p", {
@@ -927,6 +903,42 @@ class ClockSettingTab extends PluginSettingTab {
 			.showTimeZone
 			? ""
 			: "none";
+
+		// start of donation
+		const div = containerEl.createEl("div", {
+			cls: "tokei-donation",
+		});
+
+		const donateText = document.createElement("div");
+		donateText.className = "donate-text";
+
+		const donateDescription = document.createElement("p");
+		donateDescription.textContent =
+			"If you find this plugin valuable and would like to support its development, please consider using the button below. Your contribution is greatly appreciated!";
+
+		donateText.appendChild(donateDescription);
+
+		const donateLink = document.createElement("a");
+		donateLink.href = "https://www.buymeacoffee.com/mstam30561";
+		donateLink.target = "_blank";
+
+		function rotateColorRandomly(element: HTMLElement) {
+			const rotationDegrees = Math.floor(Math.random() * 8 + 1) * 45; // Randomly select a rotation value in increments of 45 degrees
+			element.style.filter = `hue-rotate(${rotationDegrees}deg)`;
+		}
+
+		const donateImage = document.createElement("img");
+		donateImage.src =
+			"https://cdn.buymeacoffee.com/buttons/v2/default-blue.png";
+		donateImage.alt = "Buy Me A Coffee";
+
+		rotateColorRandomly(donateImage);
+		donateImage.classList.add("donate-img");
+		donateLink.appendChild(donateImage);
+		donateText.appendChild(donateLink);
+
+		div.appendChild(donateText);
+		// end
 	}
 
 	private isValidTimeZoneOffset(offset: string): boolean {

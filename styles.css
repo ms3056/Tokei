@@ -150,7 +150,7 @@ settings:
   flex-direction: column; 
   align-items: center;
   border: 2px solid var(--tokei-border); 
-  max-width: 25%;
+  max-width: 30%;
   background-color: var(--tokei-background); 
   border-radius: 5px;
   backdrop-filter: blur(10px);
@@ -211,7 +211,7 @@ settings:
 }
 
 /* Donation Styling */
-.recent-files-donation {
+.tokei-donation {
   display: flex;
   flex-direction: column;
   align-items: center;
