@@ -68,19 +68,27 @@ class ClockView extends ItemView {
 		return "clock";
 	}
 
-	// Sort the timezone pairs based on the difference from the current offset
 	private sortTimeZones(): TimezonePair[] {
 		const currentOffset = DateTime.local().offset;
 
-		return this.plugin.settings.timeZonePairs.slice().sort((a, b) => {
-			const offsetA = parseFloat(a.offset);
-			const offsetB = parseFloat(b.offset);
+		let sortedTimeZones = this.plugin.settings.timeZonePairs
+			.slice()
+			.sort((a, b) => {
+				const offsetA = parseFloat(a.offset);
+				const offsetB = parseFloat(b.offset);
 
-			const diffA = Math.abs(currentOffset - offsetA);
-			const diffB = Math.abs(currentOffset - offsetB);
+				const diffA = Math.abs(currentOffset - offsetA);
+				const diffB = Math.abs(currentOffset - offsetB);
 
-			return diffB - diffA;
-		});
+				return diffB - diffA;
+			});
+
+		// If reverseTimezoneOrder is false, reverse the sorted array
+		if (!this.plugin.settings.reverseTimezoneOrder) {
+			sortedTimeZones = sortedTimeZones.reverse();
+		}
+
+		return sortedTimeZones;
 	}
 
 	// Display the time, date, and timezone
@@ -241,6 +249,7 @@ interface ClockSettings {
 	weekStart: "sunday" | "monday";
 	fiscalYearStart: number;
 	showWeekAndQuarter: boolean;
+	reverseTimezoneOrder: boolean;
 }
 
 // Default plugin settings
@@ -259,6 +268,7 @@ const DEFAULT_SETTINGS: ClockSettings = {
 	weekStart: "sunday",
 	fiscalYearStart: 1,
 	showWeekAndQuarter: true,
+	reverseTimezoneOrder: false,
 };
 
 // Define the ClockPlugin class that extends Plugin
@@ -651,11 +661,36 @@ class ClockSettingTab extends PluginSettingTab {
 						timezonePairsSetting.settingEl.style.display = value
 							? ""
 							: "none";
+						// Show or hide the Reverse Timezone Order setting based on the show timezones toggle value
+						reverseTimezoneOrderSetting.settingEl.style.display =
+							value ? "" : "none";
 					});
 			});
 
 		// Style the settings
 		showTimezonesSetting.settingEl.classList.add("show-timezones-settings");
+
+		const reverseTimezoneOrderSetting = new Setting(containerEl)
+			.setName("Reverse Timezone Order")
+			.setDesc("Reverse the order of displayed timezones.")
+			.addToggle((toggle) => {
+				toggle
+					.setValue(this.plugin.settings.reverseTimezoneOrder)
+					.onChange(async (value) => {
+						this.plugin.settings.reverseTimezoneOrder = value;
+						await this.plugin.saveSettings();
+
+						const clockView = this.app.workspace
+							.getLeavesOfType("tokei")
+							.find((leaf) => leaf.view instanceof ClockView);
+						if (clockView) {
+							// Update the clock immediately
+							(clockView.view as ClockView).displayTime();
+						}
+					});
+			});
+
+		reverseTimezoneOrderSetting.settingEl.classList.add("reverse-order-setting");
 
 		// Timezone Format Setting
 		const timezoneFormatSetting = new Setting(containerEl)
@@ -890,6 +925,11 @@ class ClockSettingTab extends PluginSettingTab {
 		// Show or hide settings based on the initial values of toggle switches
 		dateFormatSetting.settingEl.style.display = this.plugin.settings
 			.showDate
+			? ""
+			: "none";
+
+		reverseTimezoneOrderSetting.settingEl.style.display = this.plugin
+			.settings.showTimeZone
 			? ""
 			: "none";
 		timeFormatInput.settingEl.style.display = this.plugin.settings.showDate

@@ -271,6 +271,11 @@ settings:
   border-bottom: none;
 }
 
+.reverse-order-setting {
+  border-top: none;
+  margin-left: 20px;
+}
+
 .timezone-format-settings {
   border-top: none;
   margin-left: 20px;
