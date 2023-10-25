@@ -690,7 +690,9 @@ class ClockSettingTab extends PluginSettingTab {
 					});
 			});
 
-		reverseTimezoneOrderSetting.settingEl.classList.add("reverse-order-setting");
+		reverseTimezoneOrderSetting.settingEl.classList.add(
+			"reverse-order-setting"
+		);
 
 		// Timezone Format Setting
 		const timezoneFormatSetting = new Setting(containerEl)
@@ -792,7 +794,7 @@ class ClockSettingTab extends PluginSettingTab {
 
 			const hint = createHintElement();
 
-			function handleInput() {
+			const handleInput = debounce(() => {
 				const newName = nameInput.value.trim();
 				if (newName !== "") {
 					entry.name = newName;
@@ -802,7 +804,7 @@ class ClockSettingTab extends PluginSettingTab {
 				} else {
 					hint.textContent = "Invalid format";
 				}
-			}
+			}, 1250); 
 
 			nameInput.addEventListener("input", handleInput);
 			nameInput.addEventListener("focus", handleInput);
@@ -815,7 +817,7 @@ class ClockSettingTab extends PluginSettingTab {
 
 			offsetInput.classList.add("custom-input-width");
 
-			const handleOffsetChange = () => {
+			const handleOffsetChange = debounce(() => {
 				const newOffset = offsetInput.value.trim();
 				if (this.isValidTimeZoneOffset(newOffset)) {
 					entry.offset = newOffset;
@@ -825,7 +827,7 @@ class ClockSettingTab extends PluginSettingTab {
 				} else {
 					hint.textContent = "Invalid format";
 				}
-			};
+			}, 1250);
 
 			offsetInput.addEventListener("input", handleOffsetChange);
 			offsetInput.addEventListener("focus", handleOffsetChange);
@@ -978,7 +980,6 @@ class ClockSettingTab extends PluginSettingTab {
 		donateText.appendChild(donateLink);
 
 		div.appendChild(donateText);
-		// end
 	}
 
 	private isValidTimeZoneOffset(offset: string): boolean {
