@@ -7,6 +7,7 @@ import {
 	Setting,
 	WorkspaceLeaf,
 	Notice,
+	debounce,
 } from "obsidian";
 
 // Define the constant for the ClockView type
@@ -291,6 +292,7 @@ export default class ClockPlugin extends Plugin {
 	view: ClockView;
 	settings: ClockSettings;
 	updateInterval: NodeJS.Timeout | null = null;
+	settingsChanged: boolean;
 
 	// Load plugin settings, register the ClockView, add the 'Open Clock'
 	// command, and set up layout readiness check
@@ -352,6 +354,26 @@ export default class ClockPlugin extends Plugin {
 	// Save plugin settings
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
+		this.settingsChanged = true;
+	}
+
+	checkAndSortTimezones() {
+		if (this.settingsChanged) {
+			this.settings.timeZonePairs = this.sortTimeZones();
+			this.settingsChanged = false;
+		}
+	}
+
+	sortTimeZones(): TimezonePair[] {
+		const currentOffset = DateTime.local().offset;
+		return this.settings.timeZonePairs.slice().sort((a, b) => {
+			const offsetA = parseFloat(a.offset);
+			const offsetB = parseFloat(b.offset);
+			return (
+				Math.abs(currentOffset - offsetA) -
+				Math.abs(currentOffset - offsetB)
+			);
+		});
 	}
 }
 
@@ -415,7 +437,7 @@ class ClockSettingTab extends PluginSettingTab {
 		});
 		h2El.createEl("a", {
 			text: " Luxon Reference",
-			href: "https://moment.github.io/luxon/docs/manual/formatting.html",
+			href: "https://moment.github.io/luxon/#/formatting?id=table-of-tokens",
 			attr: {
 				target: "_blank",
 			},
@@ -434,18 +456,32 @@ class ClockSettingTab extends PluginSettingTab {
 				hint.classList.add("small-hint");
 				textField.inputEl.after(hint);
 
-				textField.inputEl.addEventListener("input", () => {
-					const value = textField.getValue();
-					if (value.trim() !== "") {
+				const handleInputDebounced = debounce(() => {
+					const value = textField.getValue().trim();
+					if (value !== "") {
 						this.plugin.settings.timeFormat = value;
 						this.plugin.saveSettings();
 						this.plugin.view.displayTime();
 						hint.textContent = "";
-					} else {
-						hint.textContent = "Enter a format";
 					}
-				});
+				}, 1250);
+
+				// Immediate function to handle empty input
+				const handleInputImmediate = () => {
+					const value = textField.getValue().trim();
+					if (value === "") {
+						hint.textContent = "Enter a valid format";
+					} else {
+						handleInputDebounced();
+					}
+				};
+
+				textField.inputEl.addEventListener(
+					"input",
+					handleInputImmediate,
+				);
 			})
+
 			.addExtraButton((button) =>
 				button
 					.setIcon("reset")
@@ -529,17 +565,31 @@ class ClockSettingTab extends PluginSettingTab {
 				hint.classList.add("small-hint");
 				textField.inputEl.after(hint);
 
-				textField.inputEl.addEventListener("input", () => {
-					const value = textField.getValue();
-					if (value.trim() !== "") {
+				// Debounced function to handle non-empty input
+				const handleInputDebounced = debounce(() => {
+					const value = textField.getValue().trim();
+					if (value !== "") {
 						this.plugin.settings.dateFormat = value;
 						this.plugin.saveSettings();
 						this.plugin.view.displayTime();
 						hint.textContent = "";
-					} else {
-						hint.textContent = "Enter a format";
 					}
-				});
+				}, 1250);
+
+				// Immediate function to handle empty input
+				const handleInputImmediate = () => {
+					const value = textField.getValue().trim();
+					if (value === "") {
+						hint.textContent = "Enter a format";
+					} else {
+						handleInputDebounced();
+					}
+				};
+
+				textField.inputEl.addEventListener(
+					"input",
+					handleInputImmediate,
+				);
 			})
 			.addExtraButton((button) =>
 				button
@@ -737,17 +787,29 @@ class ClockSettingTab extends PluginSettingTab {
 				hint.classList.add("small-hint");
 				textField.inputEl.after(hint);
 
-				textField.inputEl.addEventListener("input", () => {
-					const value = textField.getValue();
-					if (value.trim() !== "") {
+				// Debounced function to handle non-empty input
+				const handleInputDebounced = debounce(() => {
+					const value = textField.getValue().trim();
+					if (value !== "") {
 						this.plugin.settings.timezoneFormat = value;
 						this.plugin.saveSettings();
 						this.plugin.view.displayTime();
 						hint.textContent = "";
-					} else {
-						hint.textContent = "Enter a format";
 					}
-				});
+				}, 1250);
+
+				// Immediate function to handle empty input
+				const handleInputImmediate = () => {
+					const value = textField.getValue().trim();
+					if (value === "") {
+						hint.textContent = "Enter a format";
+					} else {
+						handleInputDebounced();
+					}
+				};
+
+				textField.inputEl.addEventListener("input", handleInputImmediate);
+
 			})
 			.addExtraButton((button) =>
 				button
@@ -819,12 +881,13 @@ class ClockSettingTab extends PluginSettingTab {
 			const nameInput = nameCell.createEl("input", {
 				type: "text",
 				value: entry.name,
+				cls: "custom-input-width",
 			});
-			nameInput.classList.add("custom-input-width");
 
 			const hint = createHintElement();
 
-			function handleInput() {
+			// Debounce function for name input
+			const handleInput = debounce(() => {
 				const newName = nameInput.value.trim();
 				if (newName !== "") {
 					entry.name = newName;
@@ -834,7 +897,7 @@ class ClockSettingTab extends PluginSettingTab {
 				} else {
 					hint.textContent = "Invalid format";
 				}
-			}
+			}, 1250);
 
 			nameInput.addEventListener("input", handleInput);
 			nameInput.addEventListener("focus", handleInput);
@@ -843,11 +906,11 @@ class ClockSettingTab extends PluginSettingTab {
 			const offsetInput = offsetCell.createEl("input", {
 				type: "text",
 				value: entry.offset,
+				cls: "custom-input-width",
 			});
 
-			offsetInput.classList.add("custom-input-width");
-
-			const handleOffsetChange = () => {
+			// Debounce function for offset input
+			const handleOffsetChange = debounce(() => {
 				const newOffset = offsetInput.value.trim();
 				if (this.isValidTimeZoneOffset(newOffset)) {
 					entry.offset = newOffset;
@@ -857,7 +920,7 @@ class ClockSettingTab extends PluginSettingTab {
 				} else {
 					hint.textContent = "Invalid format";
 				}
-			};
+			}, 1250);
 
 			offsetInput.addEventListener("input", handleOffsetChange);
 			offsetInput.addEventListener("focus", handleOffsetChange);

@@ -1,6 +1,6 @@
 {
 	"name": "Tokei",
-	"version": "0.7.0",
+	"version": "0.8.0",
 	"description": "A simple clock.",
 	"main": "main.js",
 	"scripts": {
