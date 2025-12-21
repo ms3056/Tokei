@@ -22,7 +22,7 @@ To manually install the plugin, follow these steps:
 3. Customize the settings as needed.
 4. If you want to modify the layout and color schemes, take a look at `styles.css` and create your own snippet to change the colors and layout.
 5. When adding timezones, press Enter after each name or offset entry.
-6. Offset field accepts either a numeric UTC offset (e.g., 0, +1, -5, +5.5) or an IANA timezone ID (e.g., America/New_York, Europe/London). Using IANA zones automatically handles DST. The field also provides suggestions from known timezones to help you pick the right ID.
+6. Offset field accepts either a numeric UTC offset (e.g., 0, +1, -5, +5.5) or an IANA timezone ID (e.g., America/New_York, Europe/London). Using IANA zones automatically handles DST. The field also provides smart suggestions from known timezones—search is forgiving and matches any part of the timezone name (e.g., search "Los" to find "America/Los_Angeles", or "Angeles" to find the same zone).
 7. Name field is optional. If left blank, Tokei derives the display label from the timezone using your selected Label style (Settings → Tokei → Label style). Default is “City segment” (e.g., "New York" from "America/New_York"). Other options include abbreviation (EST/EDT), full IANA, or UTC offset.
 
 Watch the video below for a visual guide:

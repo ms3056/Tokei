@@ -978,6 +978,7 @@ class ClockSettingTab extends PluginSettingTab {
 		// Build a datalist of known IANA timezones for suggestions
 		const timezoneListId = "tokei-timezone-list";
 		let timezoneDatalist = containerEl.querySelector(`#${timezoneListId}`) as HTMLDataListElement | null;
+		let allSupportedZones: string[] = [];
 		if (!timezoneDatalist) {
 			timezoneDatalist = containerEl.createEl("datalist", {
 				attr: { id: timezoneListId },
@@ -986,6 +987,7 @@ class ClockSettingTab extends PluginSettingTab {
 				const supported = (Intl as any).supportedValuesOf
 					? (Intl as any).supportedValuesOf("timeZone")
 					: [];
+				allSupportedZones = (supported as string[]);
 				(supported as string[]).forEach((z) => {
 					timezoneDatalist!.createEl("option", { attr: { value: z } });
 				});
@@ -1075,6 +1077,26 @@ class ClockSettingTab extends PluginSettingTab {
 
 			offsetInput.addEventListener("input", handleOffsetChange);
 			offsetInput.addEventListener("focus", handleOffsetChange);
+
+			// Add forgiving fuzzy search for timezone suggestions
+			offsetInput.addEventListener("input", (e) => {
+				const query = (e.target as HTMLInputElement).value.trim().toLowerCase();
+				// Clear datalist and rebuild with filtered zones
+				timezoneDatalist!.innerHTML = "";
+				if (query && allSupportedZones.length > 0) {
+					const filtered = allSupportedZones.filter((zone) =>
+						zone.toLowerCase().includes(query)
+					);
+					filtered.forEach((z) => {
+						timezoneDatalist!.createEl("option", { attr: { value: z } });
+					});
+				} else if (!query) {
+					// Show all zones if empty
+					allSupportedZones.forEach((z) => {
+						timezoneDatalist!.createEl("option", { attr: { value: z } });
+					});
+				}
+			});
 
 			offsetCell.appendChild(hint);
 
