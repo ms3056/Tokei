@@ -22,7 +22,8 @@ To manually install the plugin, follow these steps:
 3. Customize the settings as needed.
 4. If you want to modify the layout and color schemes, take a look at `styles.css` and create your own snippet to change the colors and layout.
 5. When adding timezones, press Enter after each name or offset entry.
-6. Offsets are in UTC format, such as 0, +1, -5, or +5.5 (equivalent to +5:30).
+6. Offset field accepts either a numeric UTC offset (e.g., 0, +1, -5, +5.5) or an IANA timezone ID (e.g., America/New_York, Europe/London). Using IANA zones automatically handles DST. The field also provides suggestions from known timezones to help you pick the right ID.
+7. Name field is optional. If left blank, Tokei derives the display label from the timezone using your selected Label style (Settings → Tokei → Label style). Default is “City segment” (e.g., "New York" from "America/New_York"). Other options include abbreviation (EST/EDT), full IANA, or UTC offset.
 
 Watch the video below for a visual guide:
 
@@ -48,4 +49,13 @@ I would like to express my gratitude to the members of the Discord community who
 ## API Documentation
 
 For more information about Obsidian's API, refer to the [Obsidian API Documentation](https://docs.obsidian.md/Home).
+
+## Settings Overview
+
+- Under "Show timezones": all timezone-related controls are grouped and aligned for clarity:
+  - Timezone Format: controls how times are displayed for zones.
+  - Label style (blank names): separate dropdown placed between format and the grid; applies when `Name` is left blank and updates immediately.
+  - Timezone settings: the grid to manage entries (Name optional; Offset accepts numeric UTC or IANA zone IDs with suggestions).
+- Toggling "Show timezones" hides/shows the Format, Label style, and Grid blocks together to keep the settings tidy.
+- Long labels are supported; timezone cards expand to fit content.
 

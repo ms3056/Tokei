@@ -146,19 +146,33 @@ settings:
 }
 
 .timezone-pair {
-  display: flex;
+  display: inline-flex;
   flex-direction: column; 
   align-items: center;
   border: 2px solid var(--tokei-border); 
-  max-width: 25%;
   background-color: var(--tokei-background); 
   border-radius: 5px;
   backdrop-filter: blur(10px);
+  width: fit-content;
+  max-width: none;
+  padding: 2px 6px;
 }
 
 .timezone-name {
   color: var(--tokei-highlight); 
   font-weight: bold;
+  white-space: nowrap;
+}
+
+.label-style-inline {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.label-style-select {
+  min-width: 12em;
 }
 
 .timezone-time {
@@ -174,9 +188,14 @@ settings:
 /* Styles for the settings dialog */
 
 .custom-input-width {
-  width: 7em;
+  width: 18em;
   box-sizing: border-box;
   line-height: 1em;
+}
+
+/* Shorter width specifically for the Name input */
+.timezone-name-input {
+  width: 10em;
 }
 
 .addButtonClass,
@@ -278,5 +297,12 @@ settings:
 
 .timezone-pairs-settings {
   margin-left: 20px;
+}
+
+/* Label style block uses default Setting layout (no extra indent) */
+.label-style-settings {
+  border-top: none;
+  margin-left: 20px;
+  border-bottom: none;
 }
 

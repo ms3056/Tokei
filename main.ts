@@ -16,18 +16,17 @@ const ClockViewType = "tokei";
 // Define the ClockView class that extends ItemView
 class ClockView extends ItemView {
 	private readonly plugin: ClockPlugin;
-	private updateInterval: number | null = null;
 	// Container elements for time, date, and timezone
 	private timeDateContainer: HTMLElement;
 	private timezoneContainer: HTMLElement;
-	private dateContainer: HTMLElement;
+	private dateContainer!: HTMLElement;
 	private weekQuarterContainer: HTMLElement;
 
 	// New properties for time, date, and timezone elements
-	private timeElement: HTMLElement;
-	private dateElement: HTMLElement;
-	private quarterElement: HTMLElement;
-	private weekElement: HTMLElement;
+	private timeElement!: HTMLElement;
+	private dateElement!: HTMLElement;
+	private quarterElement!: HTMLElement;
+	private weekElement!: HTMLElement;
 	private timezoneElements: { [key: string]: HTMLElement } = {};
 
 	constructor(leaf: WorkspaceLeaf, plugin: ClockPlugin) {
@@ -44,18 +43,16 @@ class ClockView extends ItemView {
 	public async onOpen(): Promise<void> {
 		this.initClockDisplay(); // Initialize the clock display setup
 		this.displayTime(); // Update the display immediately after setup
-		this.updateInterval = window.setInterval(
-			this.displayTime.bind(this),
-			1000, // Update the display every second
+		this.registerInterval(
+			window.setInterval(
+				this.displayTime.bind(this),
+				1000, // Update the display every second
+			)
 		);
 	}
 
 	// Called when the view is closed
 	public onClose(): Promise<void> {
-		if (this.updateInterval !== null) {
-			window.clearInterval(this.updateInterval);
-			this.updateInterval = null;
-		}
 		return super.onClose();
 	}
 
@@ -78,15 +75,22 @@ class ClockView extends ItemView {
 	private sortTimeZones(): TimezonePair[] {
 		const currentOffset = DateTime.local().offset;
 
-		return this.plugin.settings.timeZonePairs.slice().sort((a, b) => {
-			const offsetA = parseFloat(a.offset);
-			const offsetB = parseFloat(b.offset);
+		const resolveOffset = (val: string): number | null => {
+			const num = Number(val);
+			if (!Number.isNaN(num)) return num;
+			const dt = DateTime.now().setZone(val);
+			return dt.isValid ? dt.offset : null;
+		};
 
-			const diffA = Math.abs(currentOffset - offsetA);
-			const diffB = Math.abs(currentOffset - offsetB);
-
-			return diffB - diffA;
-		});
+		return this.plugin.settings.timeZonePairs
+			.slice()
+			.sort((a, b) => {
+				const offA = resolveOffset(a.offset);
+				const offB = resolveOffset(b.offset);
+				const diffA = offA === null ? Number.POSITIVE_INFINITY : Math.abs(currentOffset - offA);
+				const diffB = offB === null ? Number.POSITIVE_INFINITY : Math.abs(currentOffset - offB);
+				return diffB - diffA;
+			});
 	}
 
 	public initClockDisplay(): void {
@@ -130,24 +134,77 @@ class ClockView extends ItemView {
 		}
 
 		// Initialize timezone elements
-		this.plugin.settings.timeZonePairs.forEach((entry) => {
-			const timezonePair =
-				this.timezoneContainer.createDiv("timezone-pair");
-			timezonePair.createDiv({
-				cls: "timezone-name",
-				text: entry.name,
-			});
-			const timeElement = timezonePair.createDiv({
-				cls: "timezone-time",
-				text: "Loading...",
-			});
-			this.timezoneElements[entry.name] = timeElement;
-		});
+		this.buildTimezoneElements();
 
 		this.displayTime(); // Ensure display is updated immediately after init
 	}
 
+	public refreshTimezones(): void {
+		this.buildTimezoneElements();
+		this.updateTimezones();
+	}
+
+	private buildTimezoneElements(): void {
+		this.timezoneContainer.empty();
+		this.timezoneElements = {};
+		this.plugin.settings.timeZonePairs.forEach((entry) => {
+			const timezonePair = this.timezoneContainer.createDiv("timezone-pair");
+			const label = this.getTimezoneLabel(entry);
+			timezonePair.createDiv({ cls: "timezone-name", text: label });
+
+			const timeElement = timezonePair.createDiv({
+				cls: "timezone-time",
+				text: "Loading...",
+			});
+			const key = this.getTimezoneKey(entry);
+			this.timezoneElements[key] = timeElement;
+		});
+	}
+
+	private getTimezoneLabel(entry: TimezonePair): string {
+		const name = (entry.name || "").trim();
+		if (name) return name;
+		const val = (entry.offset || "").trim();
+		const num = Number(val);
+		const style = this.plugin.settings.labelStyle;
+		if (!Number.isNaN(num)) {
+			if (style === "utc" || style === "city" || style === "full" || style === "abbrev") {
+				const sign = num >= 0 ? "+" : "";
+				return `UTC${sign}${num}`;
+			}
+		}
+		if (val) {
+			const dt = DateTime.now().setZone(val);
+			if (dt.isValid) {
+				if (style === "abbrev") {
+					return dt.toFormat("ZZZ");
+				} else if (style === "full") {
+					return val;
+				} else if (style === "city") {
+					const seg = val.split("/").pop() || val;
+					return seg.replace(/_/g, " ");
+				} else if (style === "utc") {
+					const offsetHours = dt.offset / 60;
+					const sign = offsetHours >= 0 ? "+" : "";
+					return `UTC${sign}${offsetHours}`;
+				}
+			}
+		}
+		return val || "Timezone";
+	}
+
+	private getTimezoneKey(entry: TimezonePair): string {
+		const name = (entry.name || "").trim();
+		if (name) return name;
+		return this.getTimezoneLabel(entry);
+	}
+
 	public displayTime(): void {
+		// Rebuild timezone blocks if settings changed
+		if (this.plugin.settingsChanged) {
+			this.buildTimezoneElements();
+			this.plugin.settingsChanged = false;
+		}
 		const currentTime = DateTime.local().toFormat(
 			this.plugin.settings.timeFormat,
 		);
@@ -187,12 +244,22 @@ class ClockView extends ItemView {
 
 	private updateTimezones(): void {
 		this.plugin.settings.timeZonePairs.forEach((entry) => {
-			const offset = parseFloat(entry.offset);
-			const timezoneTime = DateTime.utc()
-				.plus({ hours: offset })
-				.toFormat(this.plugin.settings.timezoneFormat);
+			const val = (entry.offset || "").trim();
+			let timezoneTime = "";
+			const num = Number(val);
+			if (val !== "" && !Number.isNaN(num)) {
+				timezoneTime = DateTime.utc()
+					.plus({ hours: num })
+					.toFormat(this.plugin.settings.timezoneFormat);
+			} else if (val !== "") {
+				const dt = DateTime.now().setZone(val);
+				timezoneTime = dt.isValid
+					? dt.toFormat(this.plugin.settings.timezoneFormat)
+					: "Invalid zone";
+			}
 
-			const timeElement = this.timezoneElements[entry.name];
+			const key = this.getTimezoneKey(entry);
+			const timeElement = this.timezoneElements[key];
 			if (timeElement && timeElement.textContent !== timezoneTime) {
 				timeElement.textContent = timezoneTime;
 			}
@@ -267,6 +334,7 @@ interface ClockSettings {
 	weekStart: "sunday" | "monday";
 	fiscalYearStart: number;
 	showWeekAndQuarter: boolean;
+    labelStyle: "city" | "abbrev" | "full" | "utc";
 }
 
 // Default plugin settings
@@ -285,14 +353,19 @@ const DEFAULT_SETTINGS: ClockSettings = {
 	weekStart: "sunday",
 	fiscalYearStart: 1,
 	showWeekAndQuarter: true,
+    labelStyle: "city",
 };
 
 // Define the ClockPlugin class that extends Plugin
 export default class ClockPlugin extends Plugin {
-	view: ClockView;
-	settings: ClockSettings;
-	updateInterval: NodeJS.Timeout | null = null;
-	settingsChanged: boolean;
+	settings!: ClockSettings;
+	settingsChanged!: boolean;
+
+	// Compatibility getter for settings handlers
+	get view(): ClockView | undefined {
+		const leaf = this.app.workspace.getLeavesOfType(ClockViewType)[0];
+		return leaf?.view as ClockView | undefined;
+	}
 
 	// Load plugin settings, register the ClockView, add the 'Open Clock'
 	// command, and set up layout readiness check
@@ -305,8 +378,12 @@ export default class ClockPlugin extends Plugin {
 
 		this.registerView(
 			ClockViewType,
-			(leaf) => (this.view = new ClockView(leaf, this)),
+			(leaf) => new ClockView(leaf, this),
 		);
+
+		this.addRibbonIcon("clock", "Tokei", () => {
+			this.onShow();
+		});
 
 		this.addCommand({
 			id: "open",
@@ -319,14 +396,6 @@ export default class ClockPlugin extends Plugin {
 		});
 
 		this.addSettingTab(new ClockSettingTab(this.app, this));
-	}
-
-	// Clear the update interval when the plugin is unloaded
-	public onunload(): void {
-		if (this.updateInterval !== null) {
-			window.clearInterval(this.updateInterval);
-			this.updateInterval = null;
-		}
 	}
 
 	// Open the Clock view when the 'Open Clock' command is invoked
@@ -343,11 +412,6 @@ export default class ClockPlugin extends Plugin {
 		if (leaf) {
 			await leaf.setViewState({ type: ClockViewType });
 			this.app.workspace.revealLeaf(leaf);
-			this.view.displayTime();
-			this.updateInterval = setInterval(
-				this.view.displayTime.bind(this.view),
-				1000,
-			);
 		}
 	}
 
@@ -366,14 +430,21 @@ export default class ClockPlugin extends Plugin {
 
 	sortTimeZones(): TimezonePair[] {
 		const currentOffset = DateTime.local().offset;
-		return this.settings.timeZonePairs.slice().sort((a, b) => {
-			const offsetA = parseFloat(a.offset);
-			const offsetB = parseFloat(b.offset);
-			return (
-				Math.abs(currentOffset - offsetA) -
-				Math.abs(currentOffset - offsetB)
-			);
-		});
+		const resolveOffset = (val: string): number | null => {
+			const num = Number(val);
+			if (!Number.isNaN(num)) return num;
+			const dt = DateTime.now().setZone(val);
+			return dt.isValid ? dt.offset : null;
+		};
+		return this.settings.timeZonePairs
+			.slice()
+			.sort((a, b) => {
+				const offA = resolveOffset(a.offset);
+				const offB = resolveOffset(b.offset);
+				const diffA = offA === null ? Number.POSITIVE_INFINITY : Math.abs(currentOffset - offA);
+				const diffB = offB === null ? Number.POSITIVE_INFINITY : Math.abs(currentOffset - offB);
+				return diffA - diffB;
+			});
 	}
 }
 
@@ -461,7 +532,7 @@ class ClockSettingTab extends PluginSettingTab {
 					if (value !== "") {
 						this.plugin.settings.timeFormat = value;
 						this.plugin.saveSettings();
-						this.plugin.view.displayTime();
+						this.plugin.view?.displayTime();
 						hint.textContent = "";
 					}
 				}, 1250);
@@ -490,7 +561,7 @@ class ClockSettingTab extends PluginSettingTab {
 						this.plugin.settings.timeFormat =
 							DEFAULT_SETTINGS.timeFormat;
 						await this.plugin.saveSettings();
-						this.plugin.view.displayTime();
+						this.plugin.view?.displayTime();
 						const timeFormatInputEl =
 							timeFormatInput.settingEl.querySelector("input");
 						const hint =
@@ -571,7 +642,7 @@ class ClockSettingTab extends PluginSettingTab {
 					if (value !== "") {
 						this.plugin.settings.dateFormat = value;
 						this.plugin.saveSettings();
-						this.plugin.view.displayTime();
+						this.plugin.view?.displayTime();
 						hint.textContent = "";
 					}
 				}, 1250);
@@ -599,7 +670,7 @@ class ClockSettingTab extends PluginSettingTab {
 						this.plugin.settings.dateFormat =
 							DEFAULT_SETTINGS.dateFormat;
 						await this.plugin.saveSettings();
-						this.plugin.view.displayTime();
+						this.plugin.view?.displayTime();
 						const dateFormatInputEl =
 							dateFormatSetting.settingEl.querySelector("input");
 						const hint =
@@ -766,8 +837,13 @@ class ClockSettingTab extends PluginSettingTab {
 
 						// Directly update the display of timezone information in the UI
 						if (this.plugin.view) {
-							this.plugin.view.displayTime(); // This will handle showing/hiding based on the new setting
+							this.plugin.view?.displayTime(); // This will handle showing/hiding based on the new setting
 						}
+
+						// Hide or show timezone-related settings for a clean UI
+						timezoneFormatSetting.settingEl.style.display = value ? "" : "none";
+						timezonePairsSetting.settingEl.style.display = value ? "" : "none";
+						labelStyleSetting.settingEl.style.display = value ? "" : "none";
 					});
 			});
 
@@ -793,7 +869,7 @@ class ClockSettingTab extends PluginSettingTab {
 					if (value !== "") {
 						this.plugin.settings.timezoneFormat = value;
 						this.plugin.saveSettings();
-						this.plugin.view.displayTime();
+						this.plugin.view?.displayTime();
 						hint.textContent = "";
 					}
 				}, 1250);
@@ -819,7 +895,7 @@ class ClockSettingTab extends PluginSettingTab {
 						this.plugin.settings.timezoneFormat =
 							DEFAULT_SETTINGS.timezoneFormat;
 						await this.plugin.saveSettings();
-						this.plugin.view.displayTime();
+						this.plugin.view?.displayTime();
 						const timezoneFormatInputEl =
 							timezoneFormatSetting.settingEl.querySelector(
 								"input",
@@ -843,6 +919,31 @@ class ClockSettingTab extends PluginSettingTab {
 			"timezone-format-settings",
 		);
 
+		// Label style setting for blank names (own row, above the grid)
+		const labelStyleSetting = new Setting(containerEl)
+			.setName("Label style (blank names)")
+			.setDesc("How to display labels when Name is empty.")
+			.addDropdown((dropdown) => {
+				dropdown
+					.addOptions({
+						city: "City segment",
+						abbrev: "Zone abbreviation",
+						full: "Full IANA",
+						utc: "UTC offset",
+					})
+					.setValue(this.plugin.settings.labelStyle)
+					.onChange(async (value) => {
+						this.plugin.settings.labelStyle = value as
+							| "city"
+							| "abbrev"
+							| "full"
+							| "utc";
+						await this.plugin.saveSettings();
+						this.plugin.view?.refreshTimezones();
+					});
+			});
+		labelStyleSetting.settingEl.classList.add("label-style-settings");
+
 		// Timezone Pairs Setting
 		const timezonePairsSetting = new Setting(containerEl)
 			.setName("Timezone settings")
@@ -852,7 +953,7 @@ class ClockSettingTab extends PluginSettingTab {
 						"Enter the timezones you would like to display.",
 						fragment.createEl("br"),
 						fragment.createEl("br"),
-						"Example: enter EST for name and -4 for offset.",
+							"Example: enter EST for name and either -4 (numeric offset) or an IANA zone like America/New_York for offset.",
 						fragment.createEl("br"),
 						fragment.createEl("a", {
 							text: "Timzone offset Reference",
@@ -863,15 +964,46 @@ class ClockSettingTab extends PluginSettingTab {
 						" A maximum of 5 timezones are allowed.",
 						fragment.createEl("br"),
 						fragment.createEl("br"),
-						"Timezone Name and Offset pairs are not validated.",
+							"Offset accepts a numeric UTC offset (e.g., -5, +5.5) or an IANA zone ID (e.g., America/Los_Angeles). Invalid entries show a hint.",
+							fragment.createEl("br"),
+							fragment.createEl("br"),
+							"Name is optional. If left blank, the display label is derived from the zone using your chosen Label style.",
 					);
 				}),
 			);
 		timezonePairsSetting.settingEl.classList.add("timezone-pairs-settings");
-		const timezoneTable = timezonePairsSetting.settingEl.createEl("table");
+
+        
+
+		// Build a datalist of known IANA timezones for suggestions
+		const timezoneListId = "tokei-timezone-list";
+		let timezoneDatalist = containerEl.querySelector(`#${timezoneListId}`) as HTMLDataListElement | null;
+		if (!timezoneDatalist) {
+			timezoneDatalist = containerEl.createEl("datalist", {
+				attr: { id: timezoneListId },
+			}) as HTMLDataListElement;
+			try {
+				const supported = (Intl as any).supportedValuesOf
+					? (Intl as any).supportedValuesOf("timeZone")
+					: [];
+				(supported as string[]).forEach((z) => {
+					timezoneDatalist!.createEl("option", { attr: { value: z } });
+				});
+			} catch (e) {
+				// Ignore environments without supportedValuesOf
+			}
+		}
+		// Ensure controls render in the right column (not squishing the left description)
+		const timezoneControl =
+			timezonePairsSetting.settingEl.querySelector(
+				".setting-item-control",
+			) as HTMLElement || timezonePairsSetting.settingEl;
+
+
+		const timezoneTable = timezoneControl.createEl("table");
 		const timezoneTableHeader = timezoneTable.createEl("tr");
 		timezoneTableHeader.createEl("th", { text: "Name" });
-		timezoneTableHeader.createEl("th", { text: "Offset" });
+		timezoneTableHeader.createEl("th", { text: "Offset / IANA Zone" });
 		timezoneTableHeader.createEl("th", { text: "" });
 
 		this.plugin.settings.timeZonePairs.forEach((entry, index) => {
@@ -881,22 +1013,26 @@ class ClockSettingTab extends PluginSettingTab {
 			const nameInput = nameCell.createEl("input", {
 				type: "text",
 				value: entry.name,
-				cls: "custom-input-width",
+				cls: "custom-input-width timezone-name-input",
+				attr: { name: "timezone-name" },
 			});
 
 			const hint = createHintElement();
 
-			// Debounce function for name input
+			// Debounce function for name input (optional field)
 			const handleInput = debounce(() => {
 				const newName = nameInput.value.trim();
-				if (newName !== "") {
-					entry.name = newName;
-					this.plugin.saveSettings();
-					this.plugin.view.displayTime();
-					hint.textContent = "";
-				} else {
-					hint.textContent = "Invalid format";
+				entry.name = newName; // allow blank
+				this.plugin.saveSettings();
+				// Force immediate label refresh when name becomes blank or changes
+				const clockView = this.app.workspace
+					.getLeavesOfType(ClockViewType)
+					.find((leaf) => leaf.view instanceof ClockView);
+				if (clockView) {
+					(clockView.view as ClockView).refreshTimezones();
 				}
+				// Do not show error for blank Name
+				hint.textContent = "";
 			}, 1250);
 
 			nameInput.addEventListener("input", handleInput);
@@ -907,18 +1043,33 @@ class ClockSettingTab extends PluginSettingTab {
 				type: "text",
 				value: entry.offset,
 				cls: "custom-input-width",
+				attr: { name: "timezone-offset" },
 			});
+			offsetInput.setAttribute("list", timezoneListId);
 
 			// Debounce function for offset input
 			const handleOffsetChange = debounce(() => {
 				const newOffset = offsetInput.value.trim();
-				if (this.isValidTimeZoneOffset(newOffset)) {
+				if (newOffset !== "" && this.isValidTimeZoneOffset(newOffset)) {
 					entry.offset = newOffset;
 					this.plugin.saveSettings();
-					this.plugin.view.displayTime();
-					hint.textContent = "";
+					const clockView = this.app.workspace
+						.getLeavesOfType(ClockViewType)
+						.find((leaf) => leaf.view instanceof ClockView);
+					if (clockView) {
+						(clockView.view as ClockView).refreshTimezones();
+					}
+					// Provide clearer feedback
+					const asNumber = Number(newOffset);
+					if (!Number.isNaN(asNumber)) {
+						hint.textContent = "Offset accepted (UTC)";
+					} else if (DateTime.now().setZone(newOffset).isValid) {
+						hint.textContent = "Zone accepted (DST aware)";
+					} else {
+						hint.textContent = "";
+					}
 				} else {
-					hint.textContent = "Invalid format";
+					hint.textContent = "Invalid offset or zone";
 				}
 			}, 1250);
 
@@ -992,15 +1143,16 @@ class ClockSettingTab extends PluginSettingTab {
 			}
 		});
 
+
 		const validateAndDisplayHint = (
 			nameInput: HTMLInputElement,
 			offsetInput: HTMLInputElement,
 		) => {
-			// Validate name input
+			// Name is optional; never mark invalid if blank
 			const newName = nameInput.value.trim();
 			if (newName === "") {
-				nameInput.classList.add("invalid-input");
-				nameInput.title = "Invalid format";
+				nameInput.classList.remove("invalid-input");
+				nameInput.title = "Optional";
 			} else {
 				nameInput.classList.remove("invalid-input");
 				nameInput.removeAttribute("title");
@@ -1033,11 +1185,20 @@ class ClockSettingTab extends PluginSettingTab {
 			.showTimeZone
 			? ""
 			: "none";
+		labelStyleSetting.settingEl.style.display = this.plugin.settings
+			.showTimeZone
+			? ""
+			: "none";
 	}
 
 	private isValidTimeZoneOffset(offset: string): boolean {
-		const offsetRegex =
-			/^([-+]?((1[0-2]|0?[1-9])(\.\d+)?|0?\.5))|(\+1[0-4](\.\d+)?|0)$/;
-		return offsetRegex.test(offset);
+		const val = (offset || "").trim();
+		if (val === "") return false;
+		// Accept numeric UTC offsets like -5, +5.5
+		const offsetRegex = /^[-+]?((1[0-2]|0?[1-9])(\.\d+)?)|(0?\.5)|(\+1[0-4](\.\d+)?)|0$/;
+		if (offsetRegex.test(val)) return true;
+		// Accept valid IANA zone IDs via Luxon
+		const dt = DateTime.now().setZone(val);
+		return dt.isValid;
 	}
 }
