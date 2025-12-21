@@ -1,12 +1,11 @@
 {
-    "id": "tokei",
-    "name": "Tokei",
-    "version": "0.8.0",
-    "minAppVersion": "0.16.3",
-    "description": "A simple clock.",
-    "author": "HiroMike",
-    "authorUrl": "https://github.com/ms3056",
-    "isDesktopOnly": false,
-    "fundingUrl": "https://buymeacoffee.com/mstam30561"
-  }
-
+	"id": "tokei",
+	"name": "Tokei",
+	"version": "0.8.1",
+	"minAppVersion": "0.16.3",
+	"description": "A simple clock.",
+	"author": "HiroMike",
+	"authorUrl": "https://github.com/ms3056",
+	"isDesktopOnly": false,
+	"fundingUrl": "https://buymeacoffee.com/mstam30561"
+}
